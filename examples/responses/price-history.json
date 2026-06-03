@@ -1,0 +1,19 @@
+{
+  "product_id": "demo_iphone_15_pro",
+  "currency": "EUR",
+  "current_price": 563,
+  "historical_low": 541,
+  "historical_high": 729,
+  "average_price": 592,
+  "trend": "downward",
+  "preview": true,
+  "data_points": [
+    { "date": "2026-05-12", "price": 729 },
+    { "date": "2026-05-13", "price": 689 },
+    { "date": "2026-05-14", "price": 635 },
+    { "date": "2026-05-15", "price": 610 },
+    { "date": "2026-05-16", "price": 561 },
+    { "date": "2026-05-17", "price": 551 },
+    { "date": "2026-05-18", "price": 563 }
+  ]
+}

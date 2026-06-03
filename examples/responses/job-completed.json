@@ -1,0 +1,15 @@
+{
+  "job_id": "job_xYz123AbCdef",
+  "status": "completed",
+  "product": {
+    "product_id": "prod_aBcDeFgHi",
+    "name": "Apple iPhone 15 Pro 128GB (Refurbished)",
+    "shop": "Back Market",
+    "product_url": "https://www.backmarket.de/de-de/p/example-product",
+    "currency": "EUR",
+    "current_price": 563,
+    "status": "active",
+    "last_checked_at": "2026-05-22T17:36:58.972027Z"
+  },
+  "error": null
+}

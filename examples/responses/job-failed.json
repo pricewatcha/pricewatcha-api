@@ -1,0 +1,12 @@
+{
+  "job_id": "job_xYz123AbCdef",
+  "status": "failed",
+  "product": null,
+  "error": {
+    "code": "scrape_chain_exhausted",
+    "message": "All scraper layers failed for this URL. The shop may need a dedicated parser.",
+    "http_status": null,
+    "retry_recommended": false,
+    "retry_after_seconds": null
+  }
+}

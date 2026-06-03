@@ -1,0 +1,1030 @@
+openapi: 3.1.0
+info:
+  title: Pricewatcha API
+  version: v1
+  description: |
+    Public preview API for structured product price intelligence.
+
+    **Async-first:** submit a product URL, poll job status, read price history.
+
+    **Public data:** product prices, history, trends, URLs, and catalog search.
+    **Private data (never exposed):** user accounts, emails, watchlists, alert thresholds.
+
+    Designed for developers, AI Agents, and MCP integrations.
+
+    **Disclaimers:** Public preview; endpoints may change. Prices are informational;
+    merchant prices are authoritative. Not financial advice.
+  contact:
+    name: Pricewatcha
+    url: https://pricewatcha.com/en/developers
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: https://pricewatcha.com
+    description: Production
+
+tags:
+  - name: discovery
+    description: Health and API metadata
+  - name: ingestion
+    description: Async URL tracking jobs
+  - name: intelligence
+    description: Products, history, and search
+  - name: keys
+    description: API key management (login session token; see docs/headless-bootstrap.md)
+  - name: alerts
+    description: Price alerts (requires API key)
+  - name: webhooks
+    description: Webhook subscriptions and deliveries (requires API key)
+
+paths:
+  /api/v1/health:
+    get:
+      tags: [discovery]
+      operationId: getHealth
+      summary: Health check
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: ok
+                service: pricewatcha-api
+                version: v1
+
+  /api/v1:
+    get:
+      tags: [discovery]
+      operationId: getApiRoot
+      summary: API discovery
+      description: Returns API name, version, public-preview status, available endpoints, and disclaimer.
+      responses:
+        "200":
+          description: API metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiRootResponse"
+
+  /api/v1/track:
+    post:
+      tags: [ingestion]
+      operationId: trackProduct
+      summary: Start URL ingestion (bounded long-poll)
+      description: |
+        Submits a product URL for ingestion, then waits internally up to
+        `PRICEWATCHA_TRACK_LONGPOLL_SECONDS` (default 25) for a terminal outcome.
+
+        - Fast shops: returns `status: "completed"` with full `product` in one call.
+        - Fast failures: returns `status: "failed"` with structured `error`.
+        - Slow jobs: returns `status: "running"` with `job_id` and a `hint` to poll
+          `GET /jobs/{jobId}`.
+
+        **Track job webhooks (auth required):** optional `callback_url` (one-off push;
+        returns `callback_secret` once) or `webhook_id` (existing subscription with
+        `track_job_completed` / `track_job_failed`). Mutually exclusive. Anonymous
+        requests with either field return HTTP 400.
+
+        Keep this under typical proxy timeouts (~30s). The internal wait must not
+        block a worker thread in a busy loop.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackRequest"
+            example:
+              url: https://www.backmarket.de/de-de/p/example-product
+      responses:
+        "200":
+          description: Job state after bounded wait (same schema as GET /jobs/{jobId})
+          headers:
+            X-RateLimit-Limit:
+              schema: { type: integer }
+            X-RateLimit-Remaining:
+              schema: { type: integer }
+            X-RateLimit-Reset:
+              schema: { type: integer }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatusResponse"
+        "400":
+          description: Invalid URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/jobs/{jobId}:
+    get:
+      tags: [ingestion]
+      operationId: getJob
+      summary: Get job status
+      description: |
+        Poll an async ingestion job by ID.
+
+        **Transport vs job outcome:** HTTP 404 means the job ID was not found (or expired).
+        HTTP 200 with `status: "failed"` means the job was found but scraping failed — read `error`.
+
+        Jobs are retained for 72 hours after creation.
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^job_[A-Za-z0-9_-]{12,}$
+            example: job_xYz123AbCdef
+      responses:
+        "200":
+          description: Job state (including failed scrape outcomes)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatusResponse"
+        "400":
+          description: Malformed job ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Job not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/products/{productId}:
+    get:
+      tags: [intelligence]
+      operationId: getProduct
+      summary: Get product intelligence
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: demo_iphone_15_pro
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/products/{productId}/price-history:
+    get:
+      tags: [intelligence]
+      operationId: getPriceHistory
+      summary: Get price history and trend
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: demo_iphone_15_pro
+      responses:
+        "200":
+          description: Price history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceHistoryResponse"
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/search:
+    get:
+      tags: [intelligence]
+      operationId: searchProducts
+      summary: Search product catalog
+      description: |
+        Case-insensitive keyword search over product name, URL, platform/shop, and related fields.
+        Returns all catalog products with public product-level fields (dashboard, API, MCP, and demo).
+        Does not expose user accounts, emails, watchlists, or alert settings.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          example: iphone 15 pro
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+          description: Maximum number of results to return (default 50, max 200)
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SearchResultItem"
+
+  /api/keys:
+    post:
+      tags: [keys]
+      operationId: createApiKey
+      summary: Create API key
+      description: |
+        Create a new API key (`pwk_live_…`). Requires a login session token from
+        `POST /api/auth/login` in the `Authorization: Bearer` header (browser or
+        headless bootstrap). The full key is shown once.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiKeyCreateRequest"
+      responses:
+        "201":
+          description: API key created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      tags: [keys]
+      operationId: listApiKeys
+      summary: List API keys
+      description: List API keys for the authenticated user. Requires login session token or API key.
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: API keys
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyListResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/keys/{id}:
+    delete:
+      tags: [keys]
+      operationId: revokeApiKey
+      summary: Revoke API key
+      description: Revoke an API key by ID. Requires login session token or API key.
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Key revoked
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Key not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/alerts:
+    post:
+      tags: [alerts]
+      operationId: createAlert
+      summary: Create price alert
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertCreateRequest"
+      responses:
+        "201":
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      tags: [alerts]
+      operationId: listAlerts
+      summary: List alerts
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertListResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/alerts/{id}:
+    get:
+      tags: [alerts]
+      operationId: getAlert
+      summary: Get alert
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertResponse"
+        "404":
+          description: Alert not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags: [alerts]
+      operationId: updateAlert
+      summary: Update alert
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertUpdateRequest"
+      responses:
+        "200":
+          description: Alert updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertResponse"
+    delete:
+      tags: [alerts]
+      operationId: deleteAlert
+      summary: Delete alert
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Alert deleted
+
+  /api/v1/webhooks:
+    post:
+      tags: [webhooks]
+      operationId: createWebhook
+      summary: Create webhook subscription
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookCreateRequest"
+      responses:
+        "201":
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
+    get:
+      tags: [webhooks]
+      operationId: listWebhooks
+      summary: List webhook subscriptions
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Webhooks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookListResponse"
+
+  /api/v1/webhooks/{id}:
+    get:
+      tags: [webhooks]
+      operationId: getWebhook
+      summary: Get webhook subscription
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Webhook
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
+    patch:
+      tags: [webhooks]
+      operationId: updateWebhook
+      summary: Update webhook subscription
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookUpdateRequest"
+      responses:
+        "200":
+          description: Webhook updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
+    delete:
+      tags: [webhooks]
+      operationId: deleteWebhook
+      summary: Soft-delete webhook subscription
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Webhook deleted
+
+  /api/v1/webhooks/{id}/test:
+    post:
+      tags: [webhooks]
+      operationId: testWebhook
+      summary: Send test delivery
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Test delivery queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookTestResponse"
+
+  /api/v1/webhooks/{id}/deliveries:
+    get:
+      tags: [webhooks]
+      operationId: getWebhookDeliveries
+      summary: Delivery log
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Delivery log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookDeliveryListResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Login session token from POST /api/auth/login. Used to create the first API key
+        without a browser (headless bootstrap). Not required for routine API v1 calls
+        once you have a pwk_live_… key.
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      description: |
+        API key with format `pwk_live_…`. Recommended for scripts, agents, and integrations.
+        Create on the Developer page or via headless bootstrap. The full key is shown once
+        at creation — store it securely.
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, version]
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: pricewatcha-api
+        version:
+          type: string
+          example: v1
+
+    ApiRootResponse:
+      type: object
+      required: [name, version, status, description, documentation_url, available_endpoints, disclaimer]
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          example: public-preview
+        description:
+          type: string
+        documentation_url:
+          type: string
+        available_endpoints:
+          type: array
+          items:
+            type: object
+            properties:
+              method: { type: string }
+              path: { type: string }
+              description: { type: string }
+        disclaimer:
+          type: string
+        agent_ready:
+          type: boolean
+
+    TrackRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Public product page URL from a supported shop
+        callback_url:
+          type: string
+          format: uri
+          description: |
+            One-off HTTPS webhook for this job (requires API key).
+            Response may include callback_secret (whsec_…) exactly once.
+        webhook_id:
+          type: integer
+          exclusiveMinimum: 0
+          description: |
+            Existing webhook subscription ID (requires API key).
+            Mutually exclusive with callback_url. Subscription must include
+            track_job_completed and/or track_job_failed.
+
+    JobProduct:
+      type: object
+      required: [product_id, name, shop, product_url, currency, status]
+      properties:
+        product_id: { type: string }
+        name: { type: string }
+        shop: { type: string }
+        product_url: { type: string, format: uri }
+        currency: { type: string }
+        current_price: { type: number, nullable: true }
+        status: { type: string, example: active }
+        last_checked_at: { type: string, format: date-time, nullable: true }
+
+    JobOutcomeError:
+      type: object
+      required: [code, message, retry_recommended]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        http_status: { type: integer, nullable: true }
+        retry_recommended: { type: boolean }
+        retry_after_seconds: { type: integer, nullable: true }
+
+    JobStatusResponse:
+      type: object
+      required: [job_id, status, product, error]
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, completed, failed]
+        product:
+          $ref: "#/components/schemas/JobProduct"
+          nullable: true
+        error:
+          $ref: "#/components/schemas/JobOutcomeError"
+          nullable: true
+        hint:
+          type: string
+          description: Present when track long-poll times out while job is still running
+        callback_secret:
+          type: string
+          description: |
+            One-off signing secret (whsec_…) when callback_url was set on POST /track.
+            Shown exactly once in the track response; not returned by GET /jobs/{jobId}.
+
+    ProductResponse:
+      type: object
+      required: [product_id, name, shop, product_url, currency, status]
+      properties:
+        product_id:
+          type: string
+        name:
+          type: string
+        shop:
+          type: string
+        product_url:
+          type: string
+          format: uri
+        currency:
+          type: string
+        current_price:
+          type: number
+          nullable: true
+        last_checked_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          example: active
+        preview:
+          type: boolean
+          description: True for demo catalog entries
+
+    PriceHistoryPoint:
+      type: object
+      required: [date, price]
+      properties:
+        date:
+          type: string
+          format: date
+        price:
+          type: number
+
+    PriceHistoryResponse:
+      type: object
+      required: [product_id, currency, trend, data_points]
+      properties:
+        product_id:
+          type: string
+        currency:
+          type: string
+        current_price:
+          type: number
+          nullable: true
+        historical_low:
+          type: number
+          nullable: true
+        historical_high:
+          type: number
+          nullable: true
+        average_price:
+          type: number
+          nullable: true
+        trend:
+          type: string
+          enum: [downward, upward, stable, unknown]
+        data_points:
+          type: array
+          items:
+            $ref: "#/components/schemas/PriceHistoryPoint"
+        preview:
+          type: boolean
+
+    SearchResultItem:
+      type: object
+      required: [product_id, name, shop]
+      properties:
+        product_id:
+          type: string
+        name:
+          type: string
+        shop:
+          type: string
+        product_url:
+          type: string
+          format: uri
+          nullable: true
+        current_price:
+          type: number
+          nullable: true
+        preview:
+          type: boolean
+
+    ApiKeyCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          description: Human-readable label for the key
+
+    ApiKeyResponse:
+      type: object
+      required: [id, name, key_prefix, created_at]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        key:
+          type: string
+          description: Full key (`pwk_live_…`) — shown once at creation
+        key_prefix:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ApiKeyListResponse:
+      type: object
+      required: [keys]
+      properties:
+        keys:
+          type: array
+          items:
+            type: object
+            required: [id, name, key_prefix, created_at]
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              key_prefix:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+
+    AlertCreateRequest:
+      type: object
+      required: [product_id, threshold_price]
+      properties:
+        product_id:
+          type: string
+        threshold_price:
+          type: number
+        webhook_url:
+          type: string
+          format: uri
+        notify_email:
+          type: boolean
+        name:
+          type: string
+
+    AlertUpdateRequest:
+      type: object
+      properties:
+        threshold_price:
+          type: number
+        webhook_url:
+          type: string
+          format: uri
+        notify_email:
+          type: boolean
+        name:
+          type: string
+
+    AlertResponse:
+      type: object
+      required: [id, product_id, threshold_price, created_at]
+      properties:
+        id:
+          type: string
+        product_id:
+          type: string
+        threshold_price:
+          type: number
+        webhook_url:
+          type: string
+          format: uri
+          nullable: true
+        notify_email:
+          type: boolean
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    AlertListResponse:
+      type: object
+      required: [alerts]
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlertResponse"
+
+    WebhookCreateRequest:
+      type: object
+      required: [url, event_types]
+      properties:
+        url:
+          type: string
+          format: uri
+        event_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - price_changed
+              - price_dropped
+              - price_increased
+              - new_historical_low
+              - price_alert_triggered
+              - track_job_completed
+              - track_job_failed
+              - webhook_test
+        product_id:
+          type: string
+          description: If set, only events for this product
+        name:
+          type: string
+
+    WebhookUpdateRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        event_types:
+          type: array
+          items:
+            type: string
+        product_id:
+          type: string
+        name:
+          type: string
+
+    WebhookResponse:
+      type: object
+      required: [id, url, event_types, created_at]
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+        event_types:
+          type: array
+          items:
+            type: string
+        product_id:
+          type: string
+          nullable: true
+        name:
+          type: string
+        secret_prefix:
+          type: string
+          description: Prefix of signing secret (`whsec_…`)
+        created_at:
+          type: string
+          format: date-time
+
+    WebhookListResponse:
+      type: object
+      required: [webhooks]
+      properties:
+        webhooks:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookResponse"
+
+    WebhookTestResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          example: queued
+
+    WebhookDelivery:
+      type: object
+      required: [id, event_type, status, created_at]
+      properties:
+        id:
+          type: string
+        event_type:
+          type: string
+        status:
+          type: string
+        http_status:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    WebhookDeliveryListResponse:
+      type: object
+      required: [deliveries]
+      properties:
+        deliveries:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookDelivery"
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+        error:
+          $ref: "#/components/schemas/JobOutcomeError"

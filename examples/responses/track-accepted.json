@@ -1,0 +1,7 @@
+{
+  "job_id": "job_xYz123AbCdef",
+  "status": "running",
+  "product": null,
+  "error": null,
+  "hint": "Job still running. Poll get_job_status with this job_id."
+}

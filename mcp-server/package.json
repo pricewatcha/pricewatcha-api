@@ -1,0 +1,42 @@
+{
+  "name": "@pricewatcha/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server exposing Pricewatcha price intelligence tools to AI Agents",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "pricewatcha-mcp": "./dist/http.js"
+  },
+  "main": "./dist/http.js",
+  "types": "./dist/http.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "npm run build:sdk && tsc",
+    "build:sdk": "npm run build --prefix ../sdks/typescript",
+    "dev": "tsx src/http.ts",
+    "start": "node dist/http.js",
+    "test": "npm run build:sdk && node --import tsx --test tests/*.test.ts"
+  },
+  "keywords": ["mcp", "pricewatcha", "price-tracking", "ai-agents"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pricewatcha/pricewatcha-api.git",
+    "directory": "mcp-server"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@pricewatcha/sdk": "file:../sdks/typescript",
+    "pg": "^8.13.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

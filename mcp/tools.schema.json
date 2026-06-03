@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pricewatcha MCP tools",
+  "description": "Reference tool definitions for the official MCP server (mcp-server/). Maps to the public HTTP API at https://pricewatcha.com/api/v1.",
+  "tools": [
+    {
+      "name": "get_api_status",
+      "description": "Check whether the Pricewatcha public API is available. Returns health and discovery metadata.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "base_url": { "type": "string" },
+          "health": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "string", "enum": ["ok", "degraded", "down"] },
+              "service": { "type": "string" },
+              "version": { "type": "string" }
+            },
+            "required": ["status"]
+          },
+          "api": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "version": { "type": "string" },
+              "status": { "type": "string" },
+              "description": { "type": "string" },
+              "agent_ready": { "type": "boolean" }
+            }
+          }
+        },
+        "required": ["base_url", "health", "api"]
+      }
+    },
+    {
+      "name": "track_product",
+      "description": "Submit a public product URL for price tracking. Performs a bounded server-side long-poll (~25s). Fast shops return status 'completed' with the full product in one call. If the scrape takes longer, returns status 'running' with a job_id — poll get_job_status until completed or failed.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true,
+        "idempotentHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string", "format": "uri", "description": "Public product page URL (HTTPS)" }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "job_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["queued", "running", "completed", "failed"] },
+          "product": {
+            "oneOf": [
+              { "$ref": "#/$defs/product" },
+              { "type": "null" }
+            ]
+          },
+          "error": {
+            "oneOf": [
+              { "$ref": "#/$defs/error" },
+              { "type": "null" }
+            ]
+          },
+          "hint": { "type": "string" }
+        },
+        "required": ["job_id", "status"],
+        "$defs": {
+          "product": {
+            "type": "object",
+            "properties": {
+              "product_id": { "type": "string" },
+              "name": { "type": "string" },
+              "shop": { "type": "string" },
+              "product_url": { "type": "string" },
+              "currency": { "type": "string" },
+              "current_price": { "type": "number" },
+              "status": { "type": "string" },
+              "last_checked_at": { "type": "string", "format": "date-time" }
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "http_status": { "type": ["integer", "null"] },
+              "retry_recommended": { "type": "boolean" },
+              "retry_after_seconds": { "type": ["integer", "null"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_job_status",
+      "description": "Poll an async tracking job by job_id. Returns status: queued | running | completed | failed. On completion, includes the full product object. On failure, includes a structured error object.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["job_id"],
+        "properties": {
+          "job_id": { "type": "string", "description": "Job ID returned by track_product (format: job_...)" }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "job_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["queued", "running", "completed", "failed"] },
+          "product": {
+            "oneOf": [
+              { "$ref": "#/$defs/product" },
+              { "type": "null" }
+            ]
+          },
+          "error": {
+            "oneOf": [
+              { "$ref": "#/$defs/error" },
+              { "type": "null" }
+            ]
+          },
+          "hint": { "type": "string" }
+        },
+        "required": ["job_id", "status"],
+        "$defs": {
+          "product": {
+            "type": "object",
+            "properties": {
+              "product_id": { "type": "string" },
+              "name": { "type": "string" },
+              "shop": { "type": "string" },
+              "product_url": { "type": "string" },
+              "currency": { "type": "string" },
+              "current_price": { "type": "number" },
+              "status": { "type": "string" },
+              "last_checked_at": { "type": "string", "format": "date-time" }
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "http_status": { "type": ["integer", "null"] },
+              "retry_recommended": { "type": "boolean" },
+              "retry_after_seconds": { "type": ["integer", "null"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_product",
+      "description": "Get structured product price intelligence by product_id (e.g. prod_... or demo_iphone_15_pro). Returns name, shop, current price, currency, last checked timestamp.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["product_id"],
+        "properties": {
+          "product_id": { "type": "string", "description": "Stable product ID from search results or a completed track job" }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "product_id": { "type": "string" },
+          "name": { "type": "string" },
+          "shop": { "type": "string" },
+          "product_url": { "type": "string" },
+          "currency": { "type": "string" },
+          "current_price": { "type": "number" },
+          "status": { "type": "string" },
+          "last_checked_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["product_id", "name", "shop", "currency"]
+      }
+    },
+    {
+      "name": "get_price_history",
+      "description": "Get historical prices, aggregates (low/high/average), trend, and data points for a product.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["product_id"],
+        "properties": {
+          "product_id": { "type": "string", "description": "Stable product ID" }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "product_id": { "type": "string" },
+          "currency": { "type": "string" },
+          "current_price": { "type": "number" },
+          "historical_low": { "type": "number" },
+          "historical_high": { "type": "number" },
+          "average_price": { "type": "number" },
+          "trend": { "type": "string", "enum": ["upward", "downward", "stable", "unknown"] },
+          "data_points": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": { "type": "string", "format": "date" },
+                "price": { "type": "number" }
+              },
+              "required": ["date", "price"]
+            }
+          }
+        },
+        "required": ["product_id", "currency", "data_points"]
+      }
+    },
+    {
+      "name": "search_products",
+      "description": "Search the full Pricewatcha product catalog by keyword (name, URL, shop/platform). Returns product-level fields only — no user data.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Search term" }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "count": { "type": "integer" },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "product_id": { "type": "string" },
+                "name": { "type": "string" },
+                "shop": { "type": "string" },
+                "current_price": { "type": "number" },
+                "currency": { "type": "string" },
+                "status": { "type": "string" },
+                "preview": { "type": "boolean" }
+              },
+              "required": ["product_id", "name", "shop"]
+            }
+          }
+        },
+        "required": ["query", "count", "results"]
+      }
+    }
+  ]
+}
