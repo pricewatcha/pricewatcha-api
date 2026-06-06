@@ -5,6 +5,7 @@ import { handleToolError, toolSuccessResult } from "../utils/errors.js";
 import {
   getApiStatusOutputSchema,
   READ_ONLY_TOOL_ANNOTATIONS,
+  TOOL_TITLES,
 } from "../utils/tool-metadata.js";
 import { STRUCTURED_ERROR_HINT } from "../utils/tool-descriptions.js";
 
@@ -12,6 +13,7 @@ export function registerGetApiStatus(server: McpServer): void {
   server.registerTool(
     "get_api_status",
     {
+      title: TOOL_TITLES.get_api_status,
       description: `Check whether the Pricewatcha public API is available. Returns health and discovery metadata. ${STRUCTURED_ERROR_HINT}`,
       outputSchema: getApiStatusOutputSchema,
       annotations: READ_ONLY_TOOL_ANNOTATIONS,

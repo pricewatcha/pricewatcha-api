@@ -107,3 +107,32 @@ export function getMcpDbUrl(): string | undefined {
     undefined
   );
 }
+
+/** Browser client origins allowed for Streamable HTTP (DNS rebinding protection). */
+export const DEFAULT_MCP_ALLOWED_ORIGINS = [
+  "https://claude.ai",
+  "https://claude.com",
+  "https://chatgpt.com",
+  "https://pricewatcha.com",
+] as const;
+
+function normalizeOrigin(origin: string): string {
+  return origin.trim().replace(/\/$/, "");
+}
+
+/**
+ * Allowed Origin header values for browser-based MCP clients.
+ * Override with comma-separated MCP_ALLOWED_ORIGINS. Missing Origin is not checked here.
+ */
+export function getMcpAllowedOrigins(): ReadonlySet<string> {
+  const raw = process.env.MCP_ALLOWED_ORIGINS?.trim();
+  if (raw) {
+    return new Set(
+      raw
+        .split(",")
+        .map(normalizeOrigin)
+        .filter((entry) => entry.length > 0),
+    );
+  }
+  return new Set(DEFAULT_MCP_ALLOWED_ORIGINS);
+}

@@ -6,6 +6,7 @@ import { handleToolError, toolSuccessResult } from "../utils/errors.js";
 import {
   getProductOutputSchema,
   READ_ONLY_TOOL_ANNOTATIONS,
+  TOOL_TITLES,
 } from "../utils/tool-metadata.js";
 import { STRUCTURED_ERROR_HINT } from "../utils/tool-descriptions.js";
 
@@ -13,6 +14,7 @@ export function registerGetProduct(server: McpServer): void {
   server.registerTool(
     "get_product",
     {
+      title: TOOL_TITLES.get_product,
       description: `Get structured product price intelligence by product_id (e.g. demo_iphone_15_pro or prod_xxx from a completed job). ${STRUCTURED_ERROR_HINT}`,
       inputSchema: {
         product_id: z.string().min(1).describe("Public product ID"),
