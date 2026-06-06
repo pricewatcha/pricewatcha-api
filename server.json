@@ -1,0 +1,16 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.pricewatcha/pricewatcha",
+  "description": "Track prices & price history on any online shop, with alerts and an API",
+  "repository": {
+    "url": "https://github.com/pricewatcha/pricewatcha-api",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.pricewatcha.com"
+    }
+  ]
+}
