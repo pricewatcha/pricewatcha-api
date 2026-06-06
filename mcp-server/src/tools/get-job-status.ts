@@ -7,6 +7,7 @@ import { formatJobStatusResult } from "../utils/job-result.js";
 import {
   jobStatusOutputSchema,
   READ_ONLY_TOOL_ANNOTATIONS,
+  TOOL_TITLES,
 } from "../utils/tool-metadata.js";
 import { STRUCTURED_ERROR_HINT } from "../utils/tool-descriptions.js";
 
@@ -14,6 +15,7 @@ export function registerGetJobStatus(server: McpServer): void {
   server.registerTool(
     "get_job_status",
     {
+      title: TOOL_TITLES.get_job_status,
       description: `Poll an async tracking job by job_id. Returns status (queued, running, completed, or failed). On completion, product is populated; on scrape failure, error is populated (HTTP 200 job lookup — not a transport error). ${STRUCTURED_ERROR_HINT}`,
       inputSchema: {
         job_id: z.string().min(1).describe("Job ID from track_product"),

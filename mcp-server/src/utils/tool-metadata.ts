@@ -1,6 +1,16 @@
 import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
+/** Human-readable display titles for MCP tools (Anthropic connector review). */
+export const TOOL_TITLES = {
+  get_api_status: "Get API status",
+  track_product: "Track product",
+  get_job_status: "Get job status",
+  get_product: "Get product",
+  get_price_history: "Get price history",
+  search_products: "Search products",
+} as const;
+
 export const READ_ONLY_TOOL_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: true,
   destructiveHint: false,

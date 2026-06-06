@@ -6,6 +6,7 @@ import { handleToolError, toolSuccessResult } from "../utils/errors.js";
 import {
   getPriceHistoryOutputSchema,
   READ_ONLY_TOOL_ANNOTATIONS,
+  TOOL_TITLES,
 } from "../utils/tool-metadata.js";
 import { STRUCTURED_ERROR_HINT } from "../utils/tool-descriptions.js";
 
@@ -13,6 +14,7 @@ export function registerGetPriceHistory(server: McpServer): void {
   server.registerTool(
     "get_price_history",
     {
+      title: TOOL_TITLES.get_price_history,
       description: `Get historical prices, aggregates (low/high/average), trend, and data points for a product. ${STRUCTURED_ERROR_HINT}`,
       inputSchema: {
         product_id: z.string().min(1).describe("Public product ID"),

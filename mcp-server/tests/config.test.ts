@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  DEFAULT_MCP_ALLOWED_ORIGINS,
   getDefaultWaitSeconds,
+  getMcpAllowedOrigins,
   getMcpIssuerUrl,
   getMcpResourceUrl,
   isOAuthEnabled,
@@ -54,6 +56,34 @@ describe("config", () => {
     } finally {
       if (prev === undefined) delete process.env.PRICEWATCHA_MCP_ISSUER_URL;
       else process.env.PRICEWATCHA_MCP_ISSUER_URL = prev;
+    }
+  });
+
+  it("getMcpAllowedOrigins defaults to Claude, ChatGPT, and Pricewatcha", () => {
+    const prev = process.env.MCP_ALLOWED_ORIGINS;
+    try {
+      delete process.env.MCP_ALLOWED_ORIGINS;
+      const origins = getMcpAllowedOrigins();
+      for (const origin of DEFAULT_MCP_ALLOWED_ORIGINS) {
+        assert.ok(origins.has(origin), `missing default origin ${origin}`);
+      }
+    } finally {
+      if (prev === undefined) delete process.env.MCP_ALLOWED_ORIGINS;
+      else process.env.MCP_ALLOWED_ORIGINS = prev;
+    }
+  });
+
+  it("getMcpAllowedOrigins parses MCP_ALLOWED_ORIGINS", () => {
+    const prev = process.env.MCP_ALLOWED_ORIGINS;
+    try {
+      process.env.MCP_ALLOWED_ORIGINS = "https://a.example/, https://b.example";
+      assert.deepEqual([...getMcpAllowedOrigins()], [
+        "https://a.example",
+        "https://b.example",
+      ]);
+    } finally {
+      if (prev === undefined) delete process.env.MCP_ALLOWED_ORIGINS;
+      else process.env.MCP_ALLOWED_ORIGINS = prev;
     }
   });
 

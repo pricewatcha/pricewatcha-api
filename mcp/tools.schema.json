@@ -5,6 +5,7 @@
   "tools": [
     {
       "name": "get_api_status",
+      "title": "Get API status",
       "description": "Check whether the Pricewatcha public API is available. Returns health and discovery metadata.",
       "annotations": {
         "readOnlyHint": true,
@@ -45,6 +46,7 @@
     },
     {
       "name": "track_product",
+      "title": "Track product",
       "description": "Submit a public product URL for price tracking. Performs a bounded server-side long-poll (~25s). Fast shops return status 'completed' with the full product in one call. If the scrape takes longer, returns status 'running' with a job_id — poll get_job_status until completed or failed.",
       "annotations": {
         "readOnlyHint": false,
@@ -108,6 +110,7 @@
     },
     {
       "name": "get_job_status",
+      "title": "Get job status",
       "description": "Poll an async tracking job by job_id. Returns status: queued | running | completed | failed. On completion, includes the full product object. On failure, includes a structured error object.",
       "annotations": {
         "readOnlyHint": true,
@@ -171,6 +174,7 @@
     },
     {
       "name": "get_product",
+      "title": "Get product",
       "description": "Get structured product price intelligence by product_id (e.g. prod_... or demo_iphone_15_pro). Returns name, shop, current price, currency, last checked timestamp.",
       "annotations": {
         "readOnlyHint": true,
@@ -202,6 +206,7 @@
     },
     {
       "name": "get_price_history",
+      "title": "Get price history",
       "description": "Get historical prices, aggregates (low/high/average), trend, and data points for a product.",
       "annotations": {
         "readOnlyHint": true,
@@ -243,6 +248,7 @@
     },
     {
       "name": "search_products",
+      "title": "Search products",
       "description": "Search the full Pricewatcha product catalog by keyword (name, URL, shop/platform). Returns product-level fields only — no user data.",
       "annotations": {
         "readOnlyHint": true,
