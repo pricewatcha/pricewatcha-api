@@ -40,7 +40,7 @@ describe("Host header validation", () => {
   const prevHosts = process.env.MCP_ALLOWED_HOSTS;
 
   before(async () => {
-    process.env.MCP_ALLOWED_HOSTS = "mcp.pricewatcha.com";
+    process.env.MCP_ALLOWED_HOSTS = "mcp.pricewatcha.com,healthcheck.railway.app";
     const app = createHttpApp();
     await new Promise<void>((resolve) => {
       server = app.listen(0, "127.0.0.1", () => resolve());
@@ -62,6 +62,11 @@ describe("Host header validation", () => {
     const body = JSON.parse(res.body) as { status: string; service: string };
     assert.equal(body.status, "ok");
     assert.equal(body.service, "pricewatcha-mcp");
+  });
+
+  it("allows Railway healthcheck Host header", async () => {
+    const res = await httpGetWithHost(port, "healthcheck.railway.app", "/health");
+    assert.equal(res.status, 200);
   });
 
   it("rejects requests with HTTP 403 for a disallowed Host header", async () => {
