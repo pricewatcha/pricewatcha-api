@@ -24,6 +24,11 @@ const FAVICON_ASSETS: Record<string, FaviconAsset> = {
     contentType: "image/png",
     cacheControl: "public, max-age=86400",
   },
+  "/logo.svg": {
+    fileName: "pricewatcha-binoculars.svg",
+    contentType: "image/svg+xml",
+    cacheControl: "public, max-age=86400",
+  },
 };
 
 function loadAsset(fileName: string): Buffer {

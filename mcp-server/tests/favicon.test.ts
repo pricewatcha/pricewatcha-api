@@ -89,4 +89,20 @@ describe("favicon routes", () => {
     });
     assert.equal(res.status, 200);
   });
+
+  it("serves /logo.svg as image/svg+xml", async () => {
+    const res = await httpGet(port, "/logo.svg");
+    assert.equal(res.status, 200);
+    assert.equal(res.contentType, "image/svg+xml");
+    assert.match(res.body.toString("utf8"), /^<\?xml|<svg/i);
+  });
+
+  it("allows /logo.svg with disallowed Host and Origin (public asset)", async () => {
+    const res = await httpGet(port, "/logo.svg", {
+      Host: "evil.example",
+      Origin: "https://evil.example",
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.contentType, "image/svg+xml");
+  });
 });
