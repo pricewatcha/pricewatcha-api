@@ -86,8 +86,51 @@ describe("Host header validation", () => {
     assert.equal(res.status, 200);
   });
 
-  it("rejects MCP routes with HTTP 403 for a disallowed Host header", async () => {
+  it("allows GET / with a disallowed Host header (public HTML for favicon crawlers)", async () => {
     const res = await httpGetWithHost(port, "evil.example", "/");
+    assert.equal(res.status, 200);
+    assert.match(res.body, /href="\/favicon\.ico"/);
+  });
+
+  it("rejects MCP routes with HTTP 403 for a disallowed Host header", async () => {
+    const res = await new Promise<{ status: number; body: string }>((resolve, reject) => {
+      const req = http.request(
+        {
+          hostname: "127.0.0.1",
+          port,
+          path: "/",
+          method: "POST",
+          headers: {
+            Host: "evil.example",
+            "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
+          },
+        },
+        (response) => {
+          let body = "";
+          response.on("data", (chunk: Buffer) => {
+            body += chunk.toString();
+          });
+          response.on("end", () => {
+            resolve({ status: response.statusCode ?? 0, body });
+          });
+        },
+      );
+      req.on("error", reject);
+      req.write(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          method: "initialize",
+          params: {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "test", version: "0" },
+          },
+          id: 1,
+        }),
+      );
+      req.end();
+    });
     assert.equal(res.status, 403);
     const body = JSON.parse(res.body) as { error: { message: string } };
     assert.match(body.error.message, /Invalid Host: evil\.example/);
