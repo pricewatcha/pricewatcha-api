@@ -2,6 +2,7 @@ import { hostHeaderValidation } from "@modelcontextprotocol/sdk/server/middlewar
 import type { RequestHandler } from "express";
 
 import { getMcpAllowedHosts } from "../config.js";
+import { isPublicUnguardedPath } from "./public-paths.js";
 
 /**
  * Host-header DNS rebinding protection for MCP routes.
@@ -12,7 +13,7 @@ export function createHostValidationMiddleware(
 ): RequestHandler {
   const validate = hostHeaderValidation(allowedHosts);
   return (req, res, next) => {
-    if (req.path === "/health") {
+    if (isPublicUnguardedPath(req.path)) {
       next();
       return;
     }
