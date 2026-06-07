@@ -109,9 +109,12 @@ describe("MCP OAuth", () => {
     assert.notEqual(res.status, 404);
   });
 
-  it("GET / returns 405", async () => {
+  it("GET / returns HTML landing page for favicon discovery", async () => {
     const res = await fetch(`${baseUrl}/`);
-    assert.equal(res.status, 405);
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get("content-type") ?? "", /^text\/html/);
+    const html = await res.text();
+    assert.match(html, /href="\/favicon\.ico"/);
   });
 
   it("DCR + authorization code flow yields a usable access token", async () => {

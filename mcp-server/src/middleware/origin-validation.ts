@@ -11,7 +11,7 @@ export function createOriginValidationMiddleware(
   allowedOrigins: ReadonlySet<string> = getMcpAllowedOrigins(),
 ): RequestHandler {
   return (req, res, next) => {
-    if (isPublicUnguardedPath(req.path)) {
+    if (isPublicUnguardedPath(req.path, req.method)) {
       next();
       return;
     }

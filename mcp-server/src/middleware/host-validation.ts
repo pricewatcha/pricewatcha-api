@@ -13,7 +13,7 @@ export function createHostValidationMiddleware(
 ): RequestHandler {
   const validate = hostHeaderValidation(allowedHosts);
   return (req, res, next) => {
-    if (isPublicUnguardedPath(req.path)) {
+    if (isPublicUnguardedPath(req.path, req.method)) {
       next();
       return;
     }

@@ -5,6 +5,7 @@ import { createHostValidationMiddleware } from "./middleware/host-validation.js"
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { getDbPool, mountOAuthRoutes } from "./oauth/setup.js";
 import { mountFaviconRoutes } from "./routes/favicon.js";
+import { mountRootPageRoutes } from "./routes/root-page.js";
 import { createServer } from "./server.js";
 
 async function handleMcpPost(req: Request, res: Response): Promise<void> {
@@ -41,14 +42,11 @@ export function createHttpApp(): Express {
     res.json({ status: "ok", service: "pricewatcha-mcp" });
   });
   mountFaviconRoutes(app);
+  mountRootPageRoutes(app);
 
   app.use(createHostValidationMiddleware());
   app.use(createOriginValidationMiddleware());
   mountOAuthRoutes(app);
-
-  app.get("/", (_req: Request, res: Response) => {
-    res.status(405).json({ error: "method_not_allowed", message: "Use POST for MCP requests" });
-  });
 
   app.post("/", (req: Request, res: Response) => {
     void handleMcpPost(req, res);
