@@ -8,6 +8,9 @@ import { validateHttpProductionConfig } from "./config.js";
 import { initOAuthDb } from "./oauth/setup.js";
 import { getApiBaseUrl } from "./utils/client.js";
 
+/** Dual-stack bind address (Railway health probes may use IPv6). */
+const LISTEN_HOST = "::";
+
 async function probeApiOnStartup(): Promise<void> {
   const base = getApiBaseUrl();
   try {
@@ -23,15 +26,19 @@ async function main(): Promise<void> {
   process.env.PRICEWATCHA_MCP_DEFAULT_WAIT_SECONDS ??= "60";
   validateHttpProductionConfig();
 
-  await initOAuthDb();
-
   const port = Number.parseInt(process.env.PORT ?? "3000", 10);
   const app = createHttpApp();
 
-  app.listen(port, "0.0.0.0", () => {
-    console.log(`Pricewatcha MCP HTTP listening on 0.0.0.0:${port}`);
-    void probeApiOnStartup();
+  await new Promise<void>((resolve, reject) => {
+    const server = app.listen(port, LISTEN_HOST, () => resolve());
+    server.on("error", reject);
   });
+  console.log(
+    `Pricewatcha MCP HTTP listening on [${LISTEN_HOST}]:${port} (PORT=${process.env.PORT ?? "unset"})`,
+  );
+
+  void initOAuthDb();
+  void probeApiOnStartup();
 }
 
 main().catch((error) => {

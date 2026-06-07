@@ -51,7 +51,7 @@ describe("HTTP startup", () => {
     );
     assert.notEqual(result.code, 0);
     assert.match(result.stderr, /PRICEWATCHA_API_BASE_URL is required/);
-    assert.doesNotMatch(result.stdout, /listening on 0\.0\.0\.0/);
+    assert.doesNotMatch(result.stdout, /listening on \[/);
   });
 
   it("listens on 0.0.0.0 when production env is satisfied", async () => {
@@ -63,7 +63,7 @@ describe("HTTP startup", () => {
       },
       4000,
     );
-    assert.match(result.stdout, /listening on 0\.0\.0\.0:18081/);
+    assert.match(result.stdout, /listening on \[::\]:18081/);
   });
 
   it("continues startup when OAuth DB initialization fails", async () => {
@@ -77,6 +77,6 @@ describe("HTTP startup", () => {
       8000,
     );
     assert.match(result.stderr, /OAuth DB initialization failed/);
-    assert.match(result.stdout, /listening on 0\.0\.0\.0:18082/);
+    assert.match(result.stdout, /listening on \[::\]:18082/);
   });
 });
