@@ -69,8 +69,25 @@ describe("Host header validation", () => {
     assert.equal(res.status, 200);
   });
 
-  it("rejects requests with HTTP 403 for a disallowed Host header", async () => {
+  it("allows /health without Host header (platform liveness)", async () => {
+    const res = await new Promise<{ status: number }>((resolve, reject) => {
+      const req = http.request(
+        { hostname: "127.0.0.1", port, path: "/health", method: "GET" },
+        (response) => resolve({ status: response.statusCode ?? 0 }),
+      );
+      req.on("error", reject);
+      req.end();
+    });
+    assert.equal(res.status, 200);
+  });
+
+  it("allows /health even when Host is not allowlisted", async () => {
     const res = await httpGetWithHost(port, "evil.example", "/health");
+    assert.equal(res.status, 200);
+  });
+
+  it("rejects MCP routes with HTTP 403 for a disallowed Host header", async () => {
+    const res = await httpGetWithHost(port, "evil.example", "/");
     assert.equal(res.status, 403);
     const body = JSON.parse(res.body) as { error: { message: string } };
     assert.match(body.error.message, /Invalid Host: evil\.example/);
