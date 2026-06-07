@@ -2,6 +2,7 @@ import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { Express, Request, Response } from "express";
 
+import { getMcpAllowedHosts } from "./config.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { getDbPool, mountOAuthRoutes } from "./oauth/setup.js";
 import { createServer } from "./server.js";
@@ -31,7 +32,10 @@ async function handleMcpPost(req: Request, res: Response): Promise<void> {
 }
 
 export function createHttpApp(): Express {
-  const app = createMcpExpressApp({ host: "0.0.0.0" });
+  const app = createMcpExpressApp({
+    host: "0.0.0.0",
+    allowedHosts: getMcpAllowedHosts(),
+  });
   app.set("trust proxy", 1);
   app.use(createOriginValidationMiddleware());
   mountOAuthRoutes(app);

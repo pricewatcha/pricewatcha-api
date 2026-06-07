@@ -10,6 +10,7 @@ describe("HTTP MCP server", () => {
   let server: Server;
 
   before(async () => {
+    process.env.MCP_ALLOWED_HOSTS = "127.0.0.1,localhost";
     const app = createHttpApp();
     await new Promise<void>((resolve) => {
       server = app.listen(0, "127.0.0.1", () => resolve());
