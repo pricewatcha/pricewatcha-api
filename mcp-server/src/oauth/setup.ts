@@ -57,9 +57,17 @@ export async function initOAuthDb(): Promise<void> {
     return;
   }
 
-  dbPool = createPool(dbUrl);
-  await ensureSchema(dbPool);
-  console.log("OAuth DB initialized (PostgreSQL)");
+  try {
+    dbPool = createPool(dbUrl);
+    await ensureSchema(dbPool);
+    console.log("OAuth DB initialized (PostgreSQL)");
+  } catch (error) {
+    dbPool = undefined;
+    console.error(
+      "OAuth DB initialization failed — continuing with in-memory store:",
+      error,
+    );
+  }
 }
 
 function mountDynamicOAuthMetadata(app: Express, provider: NonNullable<typeof oauthProvider>): void {

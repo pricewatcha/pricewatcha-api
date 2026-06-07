@@ -28,8 +28,8 @@ async function main(): Promise<void> {
   const port = Number.parseInt(process.env.PORT ?? "3000", 10);
   const app = createHttpApp();
 
-  app.listen(port, () => {
-    console.log(`Pricewatcha MCP HTTP listening on port ${port}`);
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`Pricewatcha MCP HTTP listening on 0.0.0.0:${port}`);
     void probeApiOnStartup();
   });
 }
