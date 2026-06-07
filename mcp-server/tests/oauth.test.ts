@@ -37,6 +37,7 @@ describe("MCP OAuth", () => {
     resourceUrl = issuerHref;
     process.env.PRICEWATCHA_MCP_ISSUER_URL = baseUrl;
     process.env.MCP_OAUTH_ENABLED = "true";
+    process.env.MCP_ALLOWED_HOSTS = "127.0.0.1,localhost";
 
     const app = createHttpApp();
     await new Promise<void>((resolve) => {

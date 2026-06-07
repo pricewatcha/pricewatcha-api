@@ -35,6 +35,7 @@ describe("MCP OAuth disabled (default)", () => {
     baseUrl = `http://127.0.0.1:${port}`;
     process.env.PRICEWATCHA_MCP_ISSUER_URL = baseUrl;
     delete process.env.MCP_OAUTH_ENABLED;
+    process.env.MCP_ALLOWED_HOSTS = "127.0.0.1,localhost";
 
     const app = createHttpApp();
     await new Promise<void>((resolve) => {
@@ -45,6 +46,7 @@ describe("MCP OAuth disabled (default)", () => {
   after(() => {
     delete process.env.PRICEWATCHA_MCP_ISSUER_URL;
     delete process.env.MCP_OAUTH_ENABLED;
+    delete process.env.MCP_ALLOWED_HOSTS;
     server?.close();
   });
 
@@ -96,6 +98,7 @@ describe("MCP OAuth explicitly disabled", () => {
     baseUrl = `http://127.0.0.1:${port}`;
     process.env.PRICEWATCHA_MCP_ISSUER_URL = baseUrl;
     process.env.MCP_OAUTH_ENABLED = "false";
+    process.env.MCP_ALLOWED_HOSTS = "127.0.0.1,localhost";
 
     const app = createHttpApp();
     await new Promise<void>((resolve) => {
@@ -106,6 +109,7 @@ describe("MCP OAuth explicitly disabled", () => {
   after(() => {
     delete process.env.PRICEWATCHA_MCP_ISSUER_URL;
     delete process.env.MCP_OAUTH_ENABLED;
+    delete process.env.MCP_ALLOWED_HOSTS;
     server?.close();
   });
 

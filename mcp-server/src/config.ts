@@ -136,3 +136,25 @@ export function getMcpAllowedOrigins(): ReadonlySet<string> {
   }
   return new Set(DEFAULT_MCP_ALLOWED_ORIGINS);
 }
+
+/** Host header values allowed for Streamable HTTP (DNS rebinding protection). */
+export const DEFAULT_MCP_ALLOWED_HOSTS = ["mcp.pricewatcha.com"] as const;
+
+function normalizeHostname(hostname: string): string {
+  return hostname.trim();
+}
+
+/**
+ * Allowed Host header hostnames for MCP HTTP requests.
+ * Override with comma-separated MCP_ALLOWED_HOSTS (port-agnostic, no scheme).
+ */
+export function getMcpAllowedHosts(): string[] {
+  const raw = process.env.MCP_ALLOWED_HOSTS?.trim();
+  if (raw) {
+    return raw
+      .split(",")
+      .map(normalizeHostname)
+      .filter((entry) => entry.length > 0);
+  }
+  return [...DEFAULT_MCP_ALLOWED_HOSTS];
+}

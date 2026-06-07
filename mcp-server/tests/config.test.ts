@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  DEFAULT_MCP_ALLOWED_HOSTS,
   DEFAULT_MCP_ALLOWED_ORIGINS,
   getDefaultWaitSeconds,
+  getMcpAllowedHosts,
   getMcpAllowedOrigins,
   getMcpIssuerUrl,
   getMcpResourceUrl,
@@ -70,6 +72,31 @@ describe("config", () => {
     } finally {
       if (prev === undefined) delete process.env.MCP_ALLOWED_ORIGINS;
       else process.env.MCP_ALLOWED_ORIGINS = prev;
+    }
+  });
+
+  it("getMcpAllowedHosts defaults to mcp.pricewatcha.com", () => {
+    const prev = process.env.MCP_ALLOWED_HOSTS;
+    try {
+      delete process.env.MCP_ALLOWED_HOSTS;
+      assert.deepEqual(getMcpAllowedHosts(), [...DEFAULT_MCP_ALLOWED_HOSTS]);
+    } finally {
+      if (prev === undefined) delete process.env.MCP_ALLOWED_HOSTS;
+      else process.env.MCP_ALLOWED_HOSTS = prev;
+    }
+  });
+
+  it("getMcpAllowedHosts parses MCP_ALLOWED_HOSTS", () => {
+    const prev = process.env.MCP_ALLOWED_HOSTS;
+    try {
+      process.env.MCP_ALLOWED_HOSTS = "mcp.pricewatcha.com, health.railway.internal ";
+      assert.deepEqual(getMcpAllowedHosts(), [
+        "mcp.pricewatcha.com",
+        "health.railway.internal",
+      ]);
+    } finally {
+      if (prev === undefined) delete process.env.MCP_ALLOWED_HOSTS;
+      else process.env.MCP_ALLOWED_HOSTS = prev;
     }
   });
 
