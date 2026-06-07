@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { createHostValidationMiddleware } from "./middleware/host-validation.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { getDbPool, mountOAuthRoutes } from "./oauth/setup.js";
+import { mountFaviconRoutes } from "./routes/favicon.js";
 import { createServer } from "./server.js";
 
 async function handleMcpPost(req: Request, res: Response): Promise<void> {
@@ -35,10 +36,11 @@ export function createHttpApp(): Express {
   app.use(express.json());
   app.set("trust proxy", 1);
 
-  // Platform liveness — registered before Host/Origin guards (Railway /health probes).
+  // Public probes/assets — registered before Host/Origin guards.
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", service: "pricewatcha-mcp" });
   });
+  mountFaviconRoutes(app);
 
   app.use(createHostValidationMiddleware());
   app.use(createOriginValidationMiddleware());

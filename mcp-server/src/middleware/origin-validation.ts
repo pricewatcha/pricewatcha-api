@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 
 import { getMcpAllowedOrigins } from "../config.js";
+import { isPublicUnguardedPath } from "./public-paths.js";
 
 /**
  * Rejects browser requests with a disallowed Origin header (DNS rebinding protection).
@@ -10,6 +11,11 @@ export function createOriginValidationMiddleware(
   allowedOrigins: ReadonlySet<string> = getMcpAllowedOrigins(),
 ): RequestHandler {
   return (req, res, next) => {
+    if (isPublicUnguardedPath(req.path)) {
+      next();
+      return;
+    }
+
     const originHeader = req.headers.origin;
     if (!originHeader || typeof originHeader !== "string") {
       next();
