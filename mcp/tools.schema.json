@@ -10,7 +10,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "openWorldHint": true,
+        "openWorldHint": false,
         "idempotentHint": true
       },
       "inputSchema": {
@@ -51,7 +51,7 @@
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "openWorldHint": true,
+        "openWorldHint": false,
         "idempotentHint": false
       },
       "inputSchema": {
@@ -115,7 +115,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "openWorldHint": true,
+        "openWorldHint": false,
         "idempotentHint": true
       },
       "inputSchema": {
@@ -179,7 +179,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "openWorldHint": true,
+        "openWorldHint": false,
         "idempotentHint": true
       },
       "inputSchema": {
@@ -211,7 +211,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "openWorldHint": true,
+        "openWorldHint": false,
         "idempotentHint": true
       },
       "inputSchema": {
@@ -253,7 +253,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "openWorldHint": true,
+        "openWorldHint": false,
         "idempotentHint": true
       },
       "inputSchema": {

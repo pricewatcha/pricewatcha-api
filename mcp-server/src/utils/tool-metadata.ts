@@ -14,14 +14,14 @@ export const TOOL_TITLES = {
 export const READ_ONLY_TOOL_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: true,
   destructiveHint: false,
-  openWorldHint: true,
+  openWorldHint: false,
   idempotentHint: true,
 };
 
 export const TRACK_PRODUCT_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
   destructiveHint: false,
-  openWorldHint: true,
+  openWorldHint: false,
   idempotentHint: false,
 };
 
