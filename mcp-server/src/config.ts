@@ -138,7 +138,10 @@ export function getMcpAllowedOrigins(): ReadonlySet<string> {
 }
 
 /** Host header values allowed for Streamable HTTP (DNS rebinding protection). */
-export const DEFAULT_MCP_ALLOWED_HOSTS = ["mcp.pricewatcha.com"] as const;
+export const DEFAULT_MCP_ALLOWED_HOSTS = [
+  "mcp.pricewatcha.com",
+  "healthcheck.railway.app",
+] as const;
 
 function normalizeHostname(hostname: string): string {
   return hostname.trim();

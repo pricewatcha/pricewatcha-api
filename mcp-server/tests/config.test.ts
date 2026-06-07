@@ -75,7 +75,7 @@ describe("config", () => {
     }
   });
 
-  it("getMcpAllowedHosts defaults to mcp.pricewatcha.com", () => {
+  it("getMcpAllowedHosts defaults to production and Railway healthcheck hosts", () => {
     const prev = process.env.MCP_ALLOWED_HOSTS;
     try {
       delete process.env.MCP_ALLOWED_HOSTS;
