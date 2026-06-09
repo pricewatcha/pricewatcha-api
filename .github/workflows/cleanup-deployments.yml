@@ -1,0 +1,37 @@
+name: Clean up Railway deployments
+
+# Railway postet bei jedem Deploy ueber die GitHub-Deployments-API Status zu den
+# Environments "production" und "staging". Dadurch erscheint die "Deployments"-Box
+# im oeffentlichen Repo. Dieser Workflow raeumt diese Environments wieder weg.
+
+on:
+  deployment_status:        # feuert, sobald Railway einen Deployment-Status postet
+  workflow_dispatch:        # erlaubt manuelles Ausloesen ueber den Actions-Tab
+  schedule:
+    - cron: "0 * * * *"     # stuendlich als Sicherheitsnetz
+
+permissions:
+  deployments: write        # noetig zum Loeschen der Deployments
+  # Hinweis: Das Loeschen des KOMPLETTEN Environments braucht Admin-Zugriff.
+  # Reicht GITHUB_TOKEN dafuer nicht (Fehler beim Loeschen), siehe PAT-Variante unten.
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [production, staging]
+    steps:
+      - name: Delete "${{ matrix.environment }}" environment
+        uses: strumwolf/delete-deployment-environment@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: ${{ matrix.environment }}
+
+          # Variante A (Standard oben): Environment + Historie komplett loeschen.
+          #   -> Braucht ggf. einen PAT mit Admin-Rechten (siehe unten).
+          #
+          # Variante B: nur die Deployment-Eintraege entfernen, leeres Environment
+          #   behalten. Kommt mit GITHUB_TOKEN + "deployments: write" aus.
+          #   Dazu naechste Zeile einkommentieren:
+          # onlyRemoveDeployments: true
