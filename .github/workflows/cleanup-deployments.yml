@@ -1,37 +1,47 @@
 name: Clean up Railway deployments
 
-# Railway postet bei jedem Deploy ueber die GitHub-Deployments-API Status zu den
-# Environments "production" und "staging". Dadurch erscheint die "Deployments"-Box
-# im oeffentlichen Repo. Dieser Workflow raeumt diese Environments wieder weg.
+# Railway legt bei jedem Deploy (inkl. PR-Previews) GitHub-Deployments an,
+# wodurch die "Deployments"-Box im oeffentlichen Repo auftaucht. Dieser Workflow
+# liest die tatsaechlich vorhandenen Environment-Namen dynamisch aus und raeumt
+# deren Deployment-Eintraege weg -- so werden auch neue PR-Environments erfasst.
 
 on:
-  deployment_status:        # feuert, sobald Railway einen Deployment-Status postet
-  workflow_dispatch:        # erlaubt manuelles Ausloesen ueber den Actions-Tab
+  deployment_status:        # feuert, sobald Railway einen Status postet
+  workflow_dispatch:        # manuelles Ausloesen ueber den Actions-Tab
   schedule:
     - cron: "0 * * * *"     # stuendlich als Sicherheitsnetz
 
 permissions:
-  deployments: write        # noetig zum Loeschen der Deployments
-  # Hinweis: Das Loeschen des KOMPLETTEN Environments braucht Admin-Zugriff.
-  # Reicht GITHUB_TOKEN dafuer nicht (Fehler beim Loeschen), siehe PAT-Variante unten.
+  deployments: write        # reicht fuer onlyRemoveDeployments (kein PAT noetig)
 
 jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      envs: ${{ steps.list.outputs.envs }}
+    steps:
+      - id: list
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          envs=$(gh api /repos/${{ github.repository }}/deployments \
+            --paginate --jq '.[].environment' \
+            | sort -u | jq -R . | jq -cs .)
+          echo "Gefundene Environments: $envs"
+          echo "envs=$envs" >> "$GITHUB_OUTPUT"
+
   cleanup:
+    needs: discover
+    if: ${{ needs.discover.outputs.envs != '[]' }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        environment: [production, staging]
+        environment: ${{ fromJson(needs.discover.outputs.envs) }}
     steps:
-      - name: Delete "${{ matrix.environment }}" environment
+      - name: Remove deployments for "${{ matrix.environment }}"
         uses: strumwolf/delete-deployment-environment@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           environment: ${{ matrix.environment }}
-
-          # Variante A (Standard oben): Environment + Historie komplett loeschen.
-          #   -> Braucht ggf. einen PAT mit Admin-Rechten (siehe unten).
-          #
-          # Variante B: nur die Deployment-Eintraege entfernen, leeres Environment
-          #   behalten. Kommt mit GITHUB_TOKEN + "deployments: write" aus.
-          #   Dazu naechste Zeile einkommentieren:
-          # onlyRemoveDeployments: true
+          onlyRemoveDeployments: true   # loescht nur die Eintraege, kein Admin-Recht noetig
