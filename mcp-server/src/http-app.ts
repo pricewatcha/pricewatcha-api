@@ -48,9 +48,12 @@ export function createHttpApp(): Express {
   app.use(createOriginValidationMiddleware());
   mountOAuthRoutes(app);
 
-  app.post("/", (req: Request, res: Response) => {
+  const handleMcpRoute = (req: Request, res: Response) => {
     void handleMcpPost(req, res);
-  });
+  };
+  app.post("/", handleMcpRoute);
+  // ChatGPT uses `{connectorUrl}/mcp` as the OAuth resource and MCP transport path.
+  app.post("/mcp", handleMcpRoute);
 
   const cleanupInterval = setInterval(() => {
     const pool = getDbPool();

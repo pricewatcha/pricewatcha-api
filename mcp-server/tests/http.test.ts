@@ -60,6 +60,28 @@ describe("HTTP MCP server", () => {
       else process.env.NODE_ENV = prevNodeEnv;
     }
   });
+
+  it("POST /mcp mirrors root MCP transport for ChatGPT", async () => {
+    const res = await fetch(`${baseUrl}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "0" },
+        },
+        id: 1,
+      }),
+    });
+    assert.notEqual(res.status, 401);
+    assert.notEqual(res.status, 404);
+  });
 });
 
 describe("createServer", () => {

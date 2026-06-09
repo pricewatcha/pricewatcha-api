@@ -70,6 +70,19 @@ describe("MCP OAuth", () => {
     assert.equal(body.authorization_endpoint, `${baseUrl}/authorize`);
   });
 
+  it("serves ChatGPT path-aware OAuth discovery at /mcp well-known URIs", async () => {
+    const authRes = await fetch(`${baseUrl}/.well-known/oauth-authorization-server/mcp`);
+    assert.equal(authRes.status, 200);
+    const authBody = (await authRes.json()) as Record<string, unknown>;
+    assert.equal(authBody.registration_endpoint, `${baseUrl}/register`);
+
+    const resourceRes = await fetch(`${baseUrl}/.well-known/oauth-protected-resource/mcp`);
+    assert.equal(resourceRes.status, 200);
+    const resourceBody = (await resourceRes.json()) as Record<string, unknown>;
+    assert.equal(resourceBody.resource, `${baseUrl.replace(/\/$/, "")}/mcp`);
+    assert.deepEqual(resourceBody.authorization_servers, [issuerHref]);
+  });
+
   it("serves authorization server metadata from forwarded host when behind a proxy", async () => {
     const res = await fetch(`${baseUrl}/.well-known/oauth-authorization-server`, {
       headers: {

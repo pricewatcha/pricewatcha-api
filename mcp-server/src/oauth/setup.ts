@@ -13,7 +13,7 @@ import {
   MCP_OAUTH_SCOPES,
 } from "../config.js";
 import { createPool, ensureSchema } from "../db.js";
-import { getMcpResourceUrlFromRequest, getPublicOriginFromRequest } from "../utils/public-origin.js";
+import { getPublicOriginFromRequest } from "../utils/public-origin.js";
 import { createOAuthProvider } from "./provider.js";
 
 let oauthProvider: ReturnType<typeof createOAuthProvider> | null = null;
@@ -21,10 +21,18 @@ let dbPool: Pool | undefined;
 
 const SERVICE_DOCS_URL = "https://pricewatcha.com/en/developers";
 
+/**
+ * ChatGPT resolves OAuth against `{connectorUrl}/mcp` and probes path-aware
+ * well-known URLs such as `/.well-known/oauth-authorization-server/mcp`.
+ */
+export const CHATGPT_MCP_RESOURCE_PATH = "/mcp";
+
 /** OAuth HTTP surface — hidden with 404 when MCP_OAUTH_ENABLED is not true. */
 const OAUTH_HTTP_PATHS = [
   "/.well-known/oauth-authorization-server",
+  "/.well-known/oauth-authorization-server/mcp",
   "/.well-known/oauth-protected-resource",
+  "/.well-known/oauth-protected-resource/mcp",
   "/authorize",
   "/token",
   "/register",
@@ -70,45 +78,69 @@ export async function initOAuthDb(): Promise<void> {
   }
 }
 
+function sendAuthorizationServerMetadata(
+  req: Request,
+  res: Response,
+  provider: NonNullable<typeof oauthProvider>,
+  scopes: readonly string[],
+): void {
+  try {
+    const origin = getPublicOriginFromRequest(req);
+    const metadata = createOAuthMetadata({
+      provider,
+      issuerUrl: origin,
+      baseUrl: origin,
+      scopesSupported: [...scopes],
+      serviceDocumentationUrl: new URL(SERVICE_DOCS_URL),
+    });
+    res.json(metadata);
+  } catch (error) {
+    res.status(400).json({
+      error: "invalid_request",
+      error_description: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+function sendProtectedResourceMetadata(
+  req: Request,
+  res: Response,
+  resourcePath: string,
+  scopes: readonly string[],
+): void {
+  try {
+    const origin = getPublicOriginFromRequest(req);
+    const resourceUrl = new URL(resourcePath, origin);
+    res.json({
+      resource: resourceUrl.href,
+      authorization_servers: [origin.href],
+      scopes_supported: [...scopes],
+      resource_name: "Pricewatcha MCP",
+      resource_documentation: SERVICE_DOCS_URL,
+    });
+  } catch (error) {
+    res.status(400).json({
+      error: "invalid_request",
+      error_description: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 function mountDynamicOAuthMetadata(app: Express, provider: NonNullable<typeof oauthProvider>): void {
   const scopes = [...MCP_OAUTH_SCOPES];
 
-  app.get("/.well-known/oauth-authorization-server", (req: Request, res: Response) => {
-    try {
-      const origin = getPublicOriginFromRequest(req);
-      const metadata = createOAuthMetadata({
-        provider,
-        issuerUrl: origin,
-        baseUrl: origin,
-        scopesSupported: scopes,
-        serviceDocumentationUrl: new URL(SERVICE_DOCS_URL),
-      });
-      res.json(metadata);
-    } catch (error) {
-      res.status(400).json({
-        error: "invalid_request",
-        error_description: error instanceof Error ? error.message : String(error),
-      });
-    }
+  app.get("/.well-known/oauth-authorization-server", (req, res) => {
+    sendAuthorizationServerMetadata(req, res, provider, scopes);
+  });
+  app.get("/.well-known/oauth-authorization-server/mcp", (req, res) => {
+    sendAuthorizationServerMetadata(req, res, provider, scopes);
   });
 
-  app.get("/.well-known/oauth-protected-resource", (req: Request, res: Response) => {
-    try {
-      const origin = getPublicOriginFromRequest(req);
-      const resourceUrl = getMcpResourceUrlFromRequest(req);
-      res.json({
-        resource: resourceUrl.href,
-        authorization_servers: [origin.href],
-        scopes_supported: scopes,
-        resource_name: "Pricewatcha MCP",
-        resource_documentation: SERVICE_DOCS_URL,
-      });
-    } catch (error) {
-      res.status(400).json({
-        error: "invalid_request",
-        error_description: error instanceof Error ? error.message : String(error),
-      });
-    }
+  app.get("/.well-known/oauth-protected-resource", (req, res) => {
+    sendProtectedResourceMetadata(req, res, "/", scopes);
+  });
+  app.get("/.well-known/oauth-protected-resource/mcp", (req, res) => {
+    sendProtectedResourceMetadata(req, res, CHATGPT_MCP_RESOURCE_PATH, scopes);
   });
 }
 
