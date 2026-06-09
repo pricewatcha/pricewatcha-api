@@ -27,6 +27,10 @@ async function main(): Promise<void> {
   validateHttpProductionConfig();
 
   const port = Number.parseInt(process.env.PORT ?? "3000", 10);
+
+  // OAuth routes bind to dbPool at startup — initialize DB before createHttpApp().
+  await initOAuthDb();
+
   const app = createHttpApp();
 
   await new Promise<void>((resolve, reject) => {
@@ -37,7 +41,6 @@ async function main(): Promise<void> {
     `Pricewatcha MCP HTTP listening on [${LISTEN_HOST}]:${port} (PORT=${process.env.PORT ?? "unset"})`,
   );
 
-  void initOAuthDb();
   void probeApiOnStartup();
 }
 
