@@ -5,6 +5,7 @@ export const PUBLIC_UNGUARDED_PATHS = new Set([
   "/favicon.ico",
   "/favicon-64.png",
   "/logo.svg",
+  "/.well-known/openai-apps-challenge",
 ]);
 
 export function isPublicUnguardedPath(path: string, method: string): boolean {

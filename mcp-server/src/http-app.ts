@@ -5,6 +5,7 @@ import { createHostValidationMiddleware } from "./middleware/host-validation.js"
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { getDbPool, mountOAuthRoutes } from "./oauth/setup.js";
 import { mountFaviconRoutes } from "./routes/favicon.js";
+import { mountOpenAiAppsChallengeRoute } from "./routes/openai-apps-challenge.js";
 import { mountRootPageRoutes } from "./routes/root-page.js";
 import { createServer } from "./server.js";
 
@@ -43,6 +44,7 @@ export function createHttpApp(): Express {
   });
   mountFaviconRoutes(app);
   mountRootPageRoutes(app);
+  mountOpenAiAppsChallengeRoute(app);
 
   app.use(createHostValidationMiddleware());
   app.use(createOriginValidationMiddleware());

@@ -3,6 +3,7 @@ import type { Server } from "node:http";
 import { after, before, describe, it } from "node:test";
 
 import { createHttpApp } from "../src/http-app.js";
+import { OPENAI_APPS_CHALLENGE_TOKEN } from "../src/routes/openai-apps-challenge.js";
 import { MCP_TOOL_NAMES, createServer } from "../src/server.js";
 
 describe("HTTP MCP server", () => {
@@ -30,6 +31,13 @@ describe("HTTP MCP server", () => {
     const body = (await res.json()) as Record<string, string>;
     assert.equal(body.status, "ok");
     assert.equal(body.service, "pricewatcha-mcp");
+  });
+
+  it("GET /.well-known/openai-apps-challenge returns the verification token as plain text", async () => {
+    const res = await fetch(`${baseUrl}/.well-known/openai-apps-challenge`);
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get("content-type") ?? "", /^text\/plain/);
+    assert.equal(await res.text(), OPENAI_APPS_CHALLENGE_TOKEN);
   });
 
   it("POST / is public without Bearer token", async () => {
