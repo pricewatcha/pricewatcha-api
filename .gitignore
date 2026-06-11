@@ -18,3 +18,4 @@ dist/
 *.egg-info/
 .pytest_cache/
 htmlcov/
+chatgpt-app-submission.json
