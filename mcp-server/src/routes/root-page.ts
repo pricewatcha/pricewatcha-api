@@ -10,6 +10,11 @@ const ROOT_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <p>Pricewatcha MCP server — use POST for MCP requests.</p>
+  <p>
+    <a href="https://pricewatcha.com">Pricewatcha</a> ·
+    <a href="https://pricewatcha.com/en/developers">Developer docs</a> ·
+    <a href="https://pricewatcha.com/en/pricewatcha-in-claude-and-chatgpt">MCP setup guide</a>
+  </p>
 </body>
 </html>`;
 

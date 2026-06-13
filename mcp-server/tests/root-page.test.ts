@@ -71,6 +71,12 @@ describe("root page routes", () => {
     assert.match(res.body, /<link rel="icon" href="\/favicon\.ico">/);
     assert.match(res.body, /<link rel="icon" type="image\/png" sizes="64x64" href="\/favicon-64\.png">/);
     assert.match(res.body, /<title>Pricewatcha MCP<\/title>/);
+    assert.match(res.body, /href="https:\/\/pricewatcha\.com"/);
+    assert.match(res.body, /href="https:\/\/pricewatcha\.com\/en\/developers"/);
+    assert.match(
+      res.body,
+      /href="https:\/\/pricewatcha\.com\/en\/pricewatcha-in-claude-and-chatgpt"/,
+    );
   });
 
   it("allows GET / with disallowed Host and Origin (public page)", async () => {
