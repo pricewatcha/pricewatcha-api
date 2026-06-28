@@ -1,4 +1,4 @@
-"""HTTP client for the Pricewatcha public preview API."""
+"""HTTP client for the Pricewatcha REST API."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ DEFAULT_BASE_URL = "https://pricewatcha.com/api/v1"
 
 
 class Pricewatcha:
-    """Lightweight client for the Pricewatcha API v1 (public preview).
+    """Lightweight client for the Pricewatcha API v1.
 
     No API key required for public read endpoints.
     Pass ``api_key="pwk_live_..."`` for alerts and webhooks.

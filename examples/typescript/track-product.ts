@@ -1,7 +1,7 @@
 /**
  * Example: track a product URL and wait for structured price intelligence.
  *
- * Public preview — no API key required.
+ * No API key required.
  * Run from repository root:
  *   cd sdks/typescript && npm install && npm run build
  *   npx tsx ../examples/typescript/track-product.ts

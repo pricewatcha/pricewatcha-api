@@ -1,8 +1,8 @@
 # Rate limits
 
-## Preview Limits (indicative)
+## Current limits (indicative)
 
-The following limits apply during public preview and may change without notice.
+The following limits apply and may change without notice.
 
 | Class  | Endpoint                                          | Approx. limit      |
 |--------|---------------------------------------------------|--------------------|
@@ -12,7 +12,7 @@ The following limits apply during public preview and may change without notice.
 
 > Monitor `X-RateLimit-Remaining` and honor `429` with exponential backoff.
 
-Limits group into **Track** (`POST /track`, stricter, to limit ingestion abuse) and **Read** (all other `/api/v1/*`, higher, for caching-friendly reads). Exact numbers may change during preview.
+Limits group into **Track** (`POST /track`, stricter, to limit ingestion abuse) and **Read** (all other `/api/v1/*`, higher, for caching-friendly reads). Exact numbers may change without notice.
 
 ## Headers
 

@@ -1,4 +1,4 @@
-"""Official Python SDK for the Pricewatcha public preview API."""
+"""Official Python SDK for the Pricewatcha REST API."""
 
 from pricewatcha.client import DEFAULT_BASE_URL, Pricewatcha
 from pricewatcha.exceptions import (

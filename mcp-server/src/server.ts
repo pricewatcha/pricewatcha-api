@@ -20,7 +20,7 @@ Workflow:
 4. get_product / get_price_history / search_products read product-level catalog data.
 
 Product IDs: demo_* (samples), prod_* (all catalog products). Demo: demo_iphone_15_pro, demo_galaxy_s24.
-Public preview — no API key. Prices are informational; merchant sites are authoritative.
+No API key required. Prices are informational; merchant sites are authoritative.
 
 Tool errors use structured objects: error.code, error.message, error.http_status, error.retry_recommended, error.retry_after_seconds.`;
 

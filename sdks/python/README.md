@@ -1,12 +1,12 @@
 # Pricewatcha Python SDK
 
-Official lightweight client for the [Pricewatcha API](https://pricewatcha.com/en/developers) v1 public preview.
+Official lightweight client for the [Pricewatcha API](https://pricewatcha.com/en/developers) v1.
 
 Turn any product URL into structured price intelligence — with async job polling built in.
 
 ## Status
 
-**Public preview** — no API key required for read endpoints. Pass `api_key="pwk_live_..."` for alerts and webhooks.
+No API key required for read endpoints. Pass `api_key="pwk_live_..."` for alerts and webhooks.
 
 ## Install
 

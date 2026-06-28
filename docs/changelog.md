@@ -2,9 +2,9 @@
 
 All notable changes to the **public API contract** documented in this repository.
 
-## v1: public preview (first release)
+## v1 (first release)
 
-**v1** is the initial API version. It has not been generally released yet; the items below describe the first public preview contract as a single release.
+**v1** is the initial API version. The items below describe the first release contract.
 
 ### Added
 
@@ -17,7 +17,7 @@ All notable changes to the **public API contract** documented in this repository
 - `GET /api/v1/search?q=`
 - `GET /api/v1/openapi.json`
 - Demo catalog: `demo_iphone_15_pro`, `demo_galaxy_s24`
-- Rate limit response headers on preview endpoints
+- Rate limit response headers on v1 endpoints
 - **API keys**: `POST /api/keys`, `GET /api/keys`, `DELETE /api/keys/{id}` (`pwk_live_...`)
 - **Alerts**: `POST/GET/PATCH/DELETE /api/v1/alerts` (API key required)
 - **Webhooks**: full CRUD at `/api/v1/webhooks`, test delivery, delivery logs (API key required)
@@ -35,7 +35,7 @@ All notable changes to the **public API contract** documented in this repository
 ### Notes
 
 - Read endpoints remain open without authentication; API keys required for alerts and webhooks
-- Endpoints and fields may change before v1 general availability
+- Endpoints and fields may change without notice
 
 ---
 

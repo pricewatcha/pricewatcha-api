@@ -3,7 +3,7 @@ info:
   title: Pricewatcha API
   version: v1
   description: |
-    Public preview API for structured product price intelligence.
+    REST API for structured product price intelligence.
 
     **Async-first:** submit a product URL, poll job status, read price history.
 
@@ -12,7 +12,7 @@ info:
 
     Designed for developers, AI Agents, and MCP integrations.
 
-    **Disclaimers:** Public preview; endpoints may change. Prices are informational;
+    **Disclaimers:** Endpoints may change. Prices are informational;
     merchant prices are authoritative. Not financial advice.
   contact:
     name: Pricewatcha
@@ -62,7 +62,7 @@ paths:
       tags: [discovery]
       operationId: getApiRoot
       summary: API discovery
-      description: Returns API name, version, public-preview status, available endpoints, and disclaimer.
+      description: Returns API name, version, status, available endpoints, and disclaimer.
       responses:
         "200":
           description: API metadata
@@ -631,7 +631,7 @@ components:
           type: string
         status:
           type: string
-          example: public-preview
+          example: available
         description:
           type: string
         documentation_url:

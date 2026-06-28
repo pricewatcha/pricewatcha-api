@@ -23,7 +23,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Lightweight client for the Pricewatcha API v1 (public preview).
+ * Lightweight client for the Pricewatcha API v1.
  *
  * No API key required for public read endpoints. Pass apiKey for alerts and webhooks.
  * POST /track long-polls briefly; use getJob or trackAndWait for slow jobs.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Example: track a product URL and wait for structured price intelligence.
 
-Public preview — no API key required.
+No API key required.
 Requires: pip install -e sdks/python  (from repository root)
 """
 

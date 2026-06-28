@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "pricewatcha"
 version = "0.1.0"
-description = "Official Python client for the Pricewatcha public preview API"
+description = "Official Python client for the Pricewatcha REST API"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"

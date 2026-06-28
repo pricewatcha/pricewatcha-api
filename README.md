@@ -4,7 +4,7 @@ The **Pricewatcha API** is the **Structured Product Price Intelligence Platform*
 
 The Pricewatcha API derives from the [pricewatcha.com](https://pricewatcha.com) application. It provides price tracking, alerts and product intelligence beyond the Pricewatcha dashboard. This repository documents the public HTTP API, OpenAPI schema, official SDKs, MCP server and examples. It does not contain the production web application or scrapers.
 
-**Status:** Public preview · **Version:** `v1` (first release) · **Base URL:** `https://pricewatcha.com/api/v1`
+**Status:** Available · **Version:** `v1` · **Base URL:** `https://pricewatcha.com/api/v1`
 
 **Interactive API keys (browser):** [Developer page](https://pricewatcha.com/en/developers#api-keys)
 
@@ -199,9 +199,9 @@ Machine-readable contract: [openapi/openapi.yaml](openapi/openapi.yaml) · Live:
 
 ## Rate limits
 
-### Preview Limits (indicative)
+### Current limits (indicative)
 
-The following limits apply during public preview and may change without notice.
+The following limits apply and may change without notice.
 
 | Class  | Endpoint                                          | Approx. limit      |
 |--------|---------------------------------------------------|--------------------|
@@ -211,7 +211,7 @@ The following limits apply during public preview and may change without notice.
 
 > Monitor `X-RateLimit-Remaining` and honor `429` with exponential backoff.
 
-Limits group into **Track** (`POST /track`, stricter, to limit ingestion abuse) and **Read** (all other `/api/v1/*`, higher, for caching-friendly reads). Exact numbers may change during preview.
+Limits group into **Track** (`POST /track`, stricter, to limit ingestion abuse) and **Read** (all other `/api/v1/*`, higher, for caching-friendly reads). Exact numbers may change without notice.
 
 ### Headers
 
@@ -1136,9 +1136,9 @@ Generate clients in other languages from the [OpenAPI spec](https://github.com/p
 
 All notable changes to the **public API contract** documented in this repository.
 
-### v1: public preview (first release)
+### v1 (first release)
 
-**v1** is the initial API version. It has not been generally released yet; the items below describe the first public preview contract as a single release.
+**v1** is the initial API version. The items below describe the first release contract.
 
 #### Added
 
@@ -1151,7 +1151,7 @@ All notable changes to the **public API contract** documented in this repository
 - `GET /api/v1/search?q=`
 - `GET /api/v1/openapi.json`
 - Demo catalog: `demo_iphone_15_pro`, `demo_galaxy_s24`
-- Rate limit response headers on preview endpoints
+- Rate limit response headers on v1 endpoints
 - **API keys**: `POST /api/keys`, `GET /api/keys`, `DELETE /api/keys/{id}` (`pwk_live_...`)
 - **Alerts**: `POST/GET/PATCH/DELETE /api/v1/alerts` (API key required)
 - **Webhooks**: full CRUD at `/api/v1/webhooks`, test delivery, delivery logs (API key required)
@@ -1169,7 +1169,7 @@ All notable changes to the **public API contract** documented in this repository
 #### Notes
 
 - Read endpoints remain open without authentication; API keys required for alerts and webhooks
-- Endpoints and fields may change before v1 general availability
+- Endpoints and fields may change without notice
 
 ---
 
@@ -1194,7 +1194,7 @@ public-demo/          Demo product IDs
 
 ### Disclaimers
 
-- **Public preview**: endpoints, fields and rate limits may change.
+- **API stability**: endpoints, fields and rate limits may change.
 - **Prices are snapshots**: always verify on the merchant site.
 - **Not financial advice**: trends are derived from historical data only.
 

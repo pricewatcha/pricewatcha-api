@@ -1,12 +1,12 @@
 # @pricewatcha/sdk
 
-Official TypeScript/JavaScript client for the [Pricewatcha API](https://pricewatcha.com/en/developers) v1 public preview.
+Official TypeScript/JavaScript client for the [Pricewatcha API](https://pricewatcha.com/en/developers) v1.
 
 Turn any product URL into structured price intelligence — with async job polling built in.
 
 ## Status
 
-**Public preview** — no API key required for read endpoints. Pass `apiKey: "pwk_live_..."` for alerts and webhooks.
+No API key required for read endpoints. Pass `apiKey: "pwk_live_..."` for alerts and webhooks.
 
 ## Install
 

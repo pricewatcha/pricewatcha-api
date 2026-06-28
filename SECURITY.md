@@ -4,7 +4,7 @@
 
 | Version | Supported |
 |---------|-----------|
-| `v1` (public preview) | Yes |
+| `v1` | Yes |
 
 ## Reporting a vulnerability
 

@@ -5,7 +5,7 @@ const ENV_BASE_URL = "PRICEWATCHA_API_BASE_URL";
 let sharedClient: PricewatchaClient | null = null;
 let sharedBaseUrl: string | null = null;
 
-/** Resolve API base URL from environment (public preview, no auth). */
+/** Resolve API base URL from environment (no auth required). */
 export function getApiBaseUrl(): string {
   const fromEnv = process.env[ENV_BASE_URL]?.trim();
   return (fromEnv || DEFAULT_BASE_URL).replace(/\/$/, "");

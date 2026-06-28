@@ -1,6 +1,6 @@
 # Public demo catalog
 
-During **public preview**, these product IDs return static sample data without triggering live ingestion. Use them to build and test integrations safely.
+These product IDs return static sample data without triggering live ingestion. Use them to build and test integrations safely.
 
 | Product ID | Description |
 |------------|-------------|

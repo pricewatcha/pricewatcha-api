@@ -1,6 +1,6 @@
 ## Disclaimers
 
-- **Public preview**: endpoints, fields and rate limits may change.
+- **API stability**: endpoints, fields and rate limits may change.
 - **Prices are snapshots**: always verify on the merchant site.
 - **Not financial advice**: trends are derived from historical data only.
 
