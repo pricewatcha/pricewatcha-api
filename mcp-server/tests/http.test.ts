@@ -90,6 +90,36 @@ describe("HTTP MCP server", () => {
     assert.notEqual(res.status, 401);
     assert.notEqual(res.status, 404);
   });
+
+  it("POST with empty JSON body returns 400 instead of unhandled SyntaxError", async () => {
+    // Whitespace-only body reaches JSON.parse and throws "Unexpected end of JSON input"
+    // (same class of error as truncated/empty payloads in production logs).
+    const res = await fetch(`${baseUrl}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+      },
+      body: "   ",
+    });
+    assert.equal(res.status, 400);
+    const body = (await res.json()) as Record<string, string>;
+    assert.equal(body.error, "invalid_json");
+  });
+
+  it("POST with malformed JSON returns 400 instead of unhandled SyntaxError", async () => {
+    const res = await fetch(`${baseUrl}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+      },
+      body: "{invalid",
+    });
+    assert.equal(res.status, 400);
+    const body = (await res.json()) as Record<string, string>;
+    assert.equal(body.error, "invalid_json");
+  });
 });
 
 describe("createServer", () => {

@@ -2,6 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
 import { createHostValidationMiddleware } from "./middleware/host-validation.js";
+import { createJsonBodyErrorMiddleware } from "./middleware/json-body-error.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { getDbPool, mountOAuthRoutes } from "./oauth/setup.js";
 import { mountFaviconRoutes } from "./routes/favicon.js";
@@ -74,6 +75,9 @@ export function createHttpApp(): Express {
       });
   }, 15 * 60 * 1000);
   cleanupInterval.unref();
+
+  // Must be registered last: express.json() SyntaxErrors (empty/malformed body) land here.
+  app.use(createJsonBodyErrorMiddleware());
 
   return app;
 }
