@@ -6,6 +6,14 @@ Webhooks push **signed HTTP POST** requests when prices change, alert thresholds
 
 Subscribe to event types **globally** or for a single `product_id`. Each event type is delivered as its own request.
 
+| Scope | Behaviour |
+|-------|-----------|
+| **Global** (`product_id` omitted) | Price events for products **you** track (watchlist) or for which you have an **active price alert**. Not the full catalog. |
+| **Scoped** (`product_id` set) | Price events for that product only. |
+| **Test** (`POST /webhooks/{id}/test`) | Sends a `webhook_test` payload to verify your endpoint; no product scope. |
+
+Catalog-wide price streaming is not supported. Use the test endpoint to verify delivery, then track products or create alerts for the events you care about.
+
 Manage subscriptions via `POST {{API_BASE}}/webhooks`. Full schemas: `GET {{API_BASE}}/openapi.json` (tags `webhooks`, `alerts`).
 
 <div class="developers-callout developers-callout--info">
