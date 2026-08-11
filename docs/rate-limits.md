@@ -14,14 +14,9 @@ The following limits apply and may change without notice.
 | Read | `/search`, `/products`, `/price-history` | ~60–120 req/min per client |
 | Health | `/health` and `/` | Unlimited |
 
-> **Client identity:** limits are keyed by client IP by default. The hosted MCP
-> server forwards a stable `X-Pricewatcha-Client-Id` (OAuth token hash, else
-> connecting-IP hash) with a shared proxy secret so MCP callers are not all
-> bucketed under one egress IP.
+> **Client identity:** limits are keyed by client IP by default. The hosted MCP server forwards a stable `X-Pricewatcha-Client-Id` (OAuth token hash, else connecting-IP hash) with a shared proxy secret so MCP callers are not all bucketed under one egress IP.
 
-> Monitor `X-RateLimit-Remaining` and honor `429` with exponential backoff.
-> `X-RateLimit-Policy` names which window the headers refer to
-> (`track`, `track_hourly`, `track_daily`, `track_concurrent`, `job_read`, or `read`).
+> Monitor `X-RateLimit-Remaining` and honor `429` with exponential backoff. `X-RateLimit-Policy` names which window the headers refer to (`track`, `track_hourly`, `track_daily`, `track_concurrent`, `job_read`, or `read`).
 
 **Track quotas are counted from persisted jobs** (`api_track_jobs` by client key), so they apply across multiple app instances. A long-poll that holds the HTTP connection for ~25s still counts as **one** track job when created — sequential tracks spaced farther apart than 60s will not trip the burst window, but hourly/daily and concurrent caps still apply.
 
