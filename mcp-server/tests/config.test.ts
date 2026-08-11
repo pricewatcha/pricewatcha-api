@@ -8,6 +8,7 @@ import {
   getMcpAllowedHosts,
   getMcpAllowedOrigins,
   getMcpIssuerUrl,
+  getMcpProxySecret,
   getMcpResourceUrl,
   isOAuthEnabled,
 } from "../src/config.js";
@@ -122,6 +123,23 @@ describe("config", () => {
     } finally {
       if (prev === undefined) delete process.env.PRICEWATCHA_MCP_ISSUER_URL;
       else process.env.PRICEWATCHA_MCP_ISSUER_URL = prev;
+    }
+  });
+
+  it("getMcpProxySecret reads PRICEWATCHA_MCP_PROXY_SECRET", () => {
+    const prevA = process.env.PRICEWATCHA_MCP_PROXY_SECRET;
+    const prevB = process.env.API_V1_MCP_PROXY_SECRET;
+    try {
+      delete process.env.PRICEWATCHA_MCP_PROXY_SECRET;
+      delete process.env.API_V1_MCP_PROXY_SECRET;
+      assert.equal(getMcpProxySecret(), undefined);
+      process.env.PRICEWATCHA_MCP_PROXY_SECRET = " shared ";
+      assert.equal(getMcpProxySecret(), "shared");
+    } finally {
+      if (prevA === undefined) delete process.env.PRICEWATCHA_MCP_PROXY_SECRET;
+      else process.env.PRICEWATCHA_MCP_PROXY_SECRET = prevA;
+      if (prevB === undefined) delete process.env.API_V1_MCP_PROXY_SECRET;
+      else process.env.API_V1_MCP_PROXY_SECRET = prevB;
     }
   });
 });

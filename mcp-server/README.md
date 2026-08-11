@@ -79,6 +79,15 @@ MCP Client  →  HTTPS POST /  →  mcp-server (HTTP)  →  @pricewatcha/sdk  �
 
 No ingestion or scraping in this package — only HTTP calls to `/api/v1`.
 
+Each MCP request derives a stable client id (OAuth bearer hash, else connecting-IP hash) and — when `PRICEWATCHA_MCP_PROXY_SECRET` matches the API's `API_V1_MCP_PROXY_SECRET` — forwards it as `X-Pricewatcha-Client-Id` so API rate limits apply per caller, not the shared MCP egress IP.
+
+## Environment
+
+| Variable | Required | Effect |
+|----------|----------|--------|
+| `PRICEWATCHA_API_BASE_URL` | production | Upstream `/api/v1` base URL |
+| `PRICEWATCHA_MCP_PROXY_SECRET` | recommended | Shared secret with API (`API_V1_MCP_PROXY_SECRET`) for per-caller rate limits |
+
 ## License
 
 Apache-2.0 — see [LICENSE](../LICENSE).

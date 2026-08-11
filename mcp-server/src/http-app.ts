@@ -9,29 +9,36 @@ import { mountFaviconRoutes } from "./routes/favicon.js";
 import { mountOpenAiAppsChallengeRoute } from "./routes/openai-apps-challenge.js";
 import { mountRootPageRoutes } from "./routes/root-page.js";
 import { createServer } from "./server.js";
+import {
+  deriveMcpClientId,
+  runWithMcpRequestContext,
+} from "./utils/request-context.js";
 
 async function handleMcpPost(req: Request, res: Response): Promise<void> {
-  const server = createServer();
-  try {
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-    });
-    await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
-    res.on("close", () => {
-      void transport.close();
-      void server.close();
-    });
-  } catch (error) {
-    console.error("Error handling MCP request:", error);
-    if (!res.headersSent) {
-      res.status(500).json({
-        jsonrpc: "2.0",
-        error: { code: -32603, message: "Internal server error" },
-        id: null,
+  const clientId = deriveMcpClientId(req);
+  await runWithMcpRequestContext({ clientId }, async () => {
+    const server = createServer();
+    try {
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined,
       });
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+      res.on("close", () => {
+        void transport.close();
+        void server.close();
+      });
+    } catch (error) {
+      console.error("Error handling MCP request:", error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          jsonrpc: "2.0",
+          error: { code: -32603, message: "Internal server error" },
+          id: null,
+        });
+      }
     }
-  }
+  });
 }
 
 export function createHttpApp(): Express {

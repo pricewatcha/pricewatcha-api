@@ -1,9 +1,9 @@
-import { DEFAULT_BASE_URL, PricewatchaClient } from "@pricewatcha/sdk";
+import { PricewatchaClient, DEFAULT_BASE_URL } from "@pricewatcha/sdk";
+
+import { getMcpProxySecret } from "../config.js";
+import { getMcpRequestClientId } from "./request-context.js";
 
 const ENV_BASE_URL = "PRICEWATCHA_API_BASE_URL";
-
-let sharedClient: PricewatchaClient | null = null;
-let sharedBaseUrl: string | null = null;
 
 /** Resolve API base URL from environment (no auth required). */
 export function getApiBaseUrl(): string {
@@ -11,15 +11,22 @@ export function getApiBaseUrl(): string {
   return (fromEnv || DEFAULT_BASE_URL).replace(/\/$/, "");
 }
 
-/** Shared SDK client — all MCP tools use this (no duplicated HTTP logic). */
+/**
+ * SDK client for the current MCP request.
+ *
+ * Forwards a stable client id (+ shared proxy secret) so API rate limits are
+ * keyed per MCP caller, not the MCP service egress IP.
+ */
 export function getClient(): PricewatchaClient {
   const baseUrl = getApiBaseUrl();
-  if (!sharedClient || sharedBaseUrl !== baseUrl) {
-    sharedClient = new PricewatchaClient({
-      baseUrl,
-      headers: { "User-Agent": "@pricewatcha/mcp-server/0.1.0" },
-    });
-    sharedBaseUrl = baseUrl;
+  const headers: Record<string, string> = {
+    "User-Agent": "@pricewatcha/mcp-server/0.1.0",
+  };
+  const secret = getMcpProxySecret();
+  const clientId = getMcpRequestClientId();
+  if (secret && clientId) {
+    headers["X-Pricewatcha-Client-Id"] = clientId;
+    headers["X-Pricewatcha-Proxy-Secret"] = secret;
   }
-  return sharedClient;
+  return new PricewatchaClient({ baseUrl, headers });
 }

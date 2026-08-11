@@ -94,6 +94,12 @@ export function validateHttpProductionConfig(): void {
     console.error("PRICEWATCHA_MCP_ISSUER_URL must use https in production");
     process.exit(1);
   }
+
+  if (!getMcpProxySecret()) {
+    console.warn(
+      "PRICEWATCHA_MCP_PROXY_SECRET is unset — API rate limits will key on the MCP egress IP for all callers",
+    );
+  }
 }
 
 /**
@@ -106,6 +112,18 @@ export function getMcpDbUrl(): string | undefined {
     process.env.PRICEWATCHA_MCP_DB_URL?.trim() ||
     undefined
   );
+}
+
+/**
+ * Shared secret with the Pricewatcha API (`API_V1_MCP_PROXY_SECRET`).
+ * When set, upstream /api/v1 calls include X-Pricewatcha-Client-Id for per-caller rate limits.
+ */
+export function getMcpProxySecret(): string | undefined {
+  const value =
+    process.env.PRICEWATCHA_MCP_PROXY_SECRET?.trim() ||
+    process.env.API_V1_MCP_PROXY_SECRET?.trim() ||
+    "";
+  return value || undefined;
 }
 
 /** Browser client origins allowed for Streamable HTTP (DNS rebinding protection). */
