@@ -6,7 +6,7 @@
     "url": "https://github.com/pricewatcha/pricewatcha-api",
     "source": "github"
   },
-  "version": "0.1.0",
+  "version": "0.1.2",
   "remotes": [
     {
       "type": "streamable-http",

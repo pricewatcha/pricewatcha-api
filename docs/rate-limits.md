@@ -4,25 +4,27 @@
 
 The following limits apply and may change without notice.
 
-| Class | Endpoint | Approx. limit |
-|--------|----------|----------------|
-| Track (concurrent) | `POST /track` | ~2 in-flight jobs per client |
-| Track (burst) | `POST /track` | ~10 jobs / 60s per client |
-| Track (hourly) | `POST /track` | ~40 jobs / hour per client |
-| Track (daily) | `POST /track` | ~80 jobs / day per client |
-| Job poll | `GET /jobs/{id}` | ~40 req/min per client |
-| Read | `/search`, `/products`, `/price-history` | ~60–120 req/min per client |
-| Health | `/health` and `/` | Unlimited |
+| Class | Endpoint | Anonymous | Authenticated (API key) |
+|--------|----------|-----------|-------------------------|
+| Track (concurrent) | `POST /track` | ~2 in-flight jobs | ~4 in-flight jobs |
+| Track (burst) | `POST /track` | ~10 jobs / 60s | ~20 jobs / 60s |
+| Track (hourly) | `POST /track` | ~40 jobs / hour | ~120 jobs / hour |
+| Track (daily) | `POST /track` | ~80 jobs / day | ~400 jobs / day |
+| Job poll | `GET /jobs/{id}` | ~40 req/min per client | same |
+| Read | `/search`, `/products`, `/price-history` | ~60–120 req/min per client | same |
+| Health | `/health` and `/` | Unlimited | Unlimited |
 
-> **Client identity:** limits are keyed by client IP by default. The hosted MCP server forwards a stable `X-Pricewatcha-Client-Id` (OAuth token hash, else connecting-IP hash) with a shared proxy secret so MCP callers are not all bucketed under one egress IP.
+Send `Authorization: Bearer pwk_live_…` on `POST /track` to use the authenticated tier. Track remains available without a key at the anonymous limits.
+
+> **Client identity:** anonymous limits are keyed by client IP. Behind Cloudflare the API prefers `CF-Connecting-IP` over `X-Forwarded-For` so edge proxy IPs are not treated as distinct clients. The hosted MCP server forwards a stable `X-Pricewatcha-Client-Id` (OAuth token hash, else connecting-IP hash) with a shared proxy secret so MCP callers are not all bucketed under one egress IP. Authenticated track quotas are keyed by account (`owner_id`), not IP.
 
 > Monitor `X-RateLimit-Remaining` and honor `429` with exponential backoff. `X-RateLimit-Policy` names which window the headers refer to (`track`, `track_hourly`, `track_daily`, `track_concurrent`, `job_read`, or `read`).
 
-**Track quotas are counted from persisted jobs** (`api_track_jobs` by client key), so they apply across multiple app instances. A long-poll that holds the HTTP connection for ~25s still counts as **one** track job when created — sequential tracks spaced farther apart than 60s will not trip the burst window, but hourly/daily and concurrent caps still apply.
+**Track quotas are counted from persisted jobs** (`api_track_jobs` by client key or account), so they apply across multiple app instances. A long-poll that holds the HTTP connection for ~25s still counts as **one** track job when created — sequential tracks spaced farther apart than 60s will not trip the burst window, but hourly/daily and concurrent caps still apply.
 
 Agents should prefer: start track → poll `GET /jobs/{id}` with backoff (not every 1–2s) → read product/history once complete.
 
-Exact numbers may change without notice (env overrides: `API_V1_TRACK_*`, `API_V1_JOB_READ_*`, `API_V1_READ_*`).
+Exact numbers may change without notice (env overrides: `API_V1_TRACK_*`, `API_V1_TRACK_AUTH_*`, `API_V1_JOB_READ_*`, `API_V1_READ_*`).
 
 ## Headers
 
@@ -51,9 +53,9 @@ When limited, the API returns `429 Too Many Requests` with a JSON body:
 }
 ```
 
-**Agent guidance:** honor `429`, wait until `retry_after_seconds` / `X-RateLimit-Reset`, and reduce poll frequency on job status endpoints. Prefer spreading tracks over time rather than bursting near the hourly/daily caps.
+**Agent guidance:** honor `429`, wait until `retry_after_seconds` / `X-RateLimit-Reset`, and reduce poll frequency on job status endpoints. Prefer spreading tracks over time rather than bursting near the hourly/daily caps. Anonymous `429` responses mention that an API key raises track quotas.
 
-Operators can receive an email when hourly/daily/concurrent track limits trip (cooldown per IP; see `API_V1_RATE_LIMIT_ALERT_*`).
+Operators can receive an email when hourly/daily/concurrent track limits trip (cooldown per client; see `API_V1_RATE_LIMIT_ALERT_*`).
 
 ---
 

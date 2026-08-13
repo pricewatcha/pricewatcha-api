@@ -35,7 +35,7 @@ curl -s -X POST "https://pricewatcha.com/api/v1/track" \
 curl -s "https://pricewatcha.com/api/v1/products/{productId}/price-history"
 ```
 
-`POST /track` returns HTTP 200 with a bounded server-side long-poll (~25s). Use `product_id` from the response for price history.
+`POST /track` returns HTTP 200 with a bounded server-side long-poll (~25s). Use `product_id` from the response for price history. Optional: send `Authorization: Bearer pwk_live_…` for [higher track quotas](#rate-limits).
 
 Fast shops return `status: "completed"` with the full `product` in one call. Slow shops return `status: "running"` with a `job_id`. Poll `GET https://pricewatcha.com/api/v1/jobs/{jobId}` until the job is `completed` or `failed`. More detail: [Async track & poll](#async-workflow).
 
@@ -61,7 +61,7 @@ For authentication and data boundaries, see [Authentication](#authentication) an
 
 ## Authentication
 
-No credential required for catalog [search](search.md), product detail, price history and [async track/poll](async-workflows.md).
+No credential required for catalog [search](search.md), product detail, price history and [async track/poll](async-workflows.md). Track without a key uses [anonymous rate limits](rate-limits.md). Send an API key on `POST /track` to use the higher per-account track quotas.
 
 Protected API v1 endpoints (alerts, webhooks, authenticated track callbacks) use:
 
@@ -203,15 +203,27 @@ Machine-readable contract: [openapi/openapi.yaml](openapi/openapi.yaml) · Live:
 
 The following limits apply and may change without notice.
 
-| Class  | Endpoint                                          | Approx. limit      |
-|--------|---------------------------------------------------|--------------------|
-| Track  | `POST /track`                                     | ~10 req/min per IP |
-| Read   | `/search`, `/products`, `/price-history`, `/jobs` | ~60 req/min per IP |
-| Health | `/health` and `/`                                 | Unlimited          |
+| Class | Endpoint | Anonymous | Authenticated (API key) |
+|--------|----------|-----------|-------------------------|
+| Track (concurrent) | `POST /track` | ~2 in-flight jobs | ~4 in-flight jobs |
+| Track (burst) | `POST /track` | ~10 jobs / 60s | ~20 jobs / 60s |
+| Track (hourly) | `POST /track` | ~40 jobs / hour | ~120 jobs / hour |
+| Track (daily) | `POST /track` | ~80 jobs / day | ~400 jobs / day |
+| Job poll | `GET /jobs/{id}` | ~40 req/min per client | same |
+| Read | `/search`, `/products`, `/price-history` | ~60–120 req/min per client | same |
+| Health | `/health` and `/` | Unlimited | Unlimited |
 
-> Monitor `X-RateLimit-Remaining` and honor `429` with exponential backoff.
+Send `Authorization: Bearer pwk_live_…` on `POST /track` to use the authenticated tier. Track remains available without a key at the anonymous limits.
 
-Limits group into **Track** (`POST /track`, stricter, to limit ingestion abuse) and **Read** (all other `/api/v1/*`, higher, for caching-friendly reads). Exact numbers may change without notice.
+> **Client identity:** anonymous limits are keyed by client IP. Behind Cloudflare the API prefers `CF-Connecting-IP` over `X-Forwarded-For` so edge proxy IPs are not treated as distinct clients. The hosted MCP server forwards a stable `X-Pricewatcha-Client-Id` (OAuth token hash, else connecting-IP hash) with a shared proxy secret so MCP callers are not all bucketed under one egress IP. Authenticated track quotas are keyed by account (`owner_id`), not IP.
+
+> Monitor `X-RateLimit-Remaining` and honor `429` with exponential backoff. `X-RateLimit-Policy` names which window the headers refer to (`track`, `track_hourly`, `track_daily`, `track_concurrent`, `job_read`, or `read`).
+
+**Track quotas are counted from persisted jobs** (`api_track_jobs` by client key or account), so they apply across multiple app instances. A long-poll that holds the HTTP connection for ~25s still counts as **one** track job when created — sequential tracks spaced farther apart than 60s will not trip the burst window, but hourly/daily and concurrent caps still apply.
+
+Agents should prefer: start track → poll `GET /jobs/{id}` with backoff (not every 1–2s) → read product/history once complete.
+
+Exact numbers may change without notice (env overrides: `API_V1_TRACK_*`, `API_V1_TRACK_AUTH_*`, `API_V1_JOB_READ_*`, `API_V1_READ_*`).
 
 ### Headers
 
@@ -222,22 +234,33 @@ When rate limiting is active, responses may include:
 | `X-RateLimit-Limit` | Maximum requests in the window |
 | `X-RateLimit-Remaining` | Requests left in the window |
 | `X-RateLimit-Reset` | Unix timestamp when the window resets |
+| `X-RateLimit-Policy` | Which window the headers describe |
 
 ### HTTP 429
 
 When limited, the API returns `429 Too Many Requests` with a JSON body:
 
 ```json
-{ "detail": "Rate limit exceeded. Try again later." }
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "Rate limit exceeded (track daily). Try again later.",
+    "http_status": 429,
+    "retry_recommended": true,
+    "retry_after_seconds": 3600
+  }
+}
 ```
 
-**Agent guidance:** honor `429`, wait until `X-RateLimit-Reset` and reduce poll frequency on job status endpoints.
+**Agent guidance:** honor `429`, wait until `retry_after_seconds` / `X-RateLimit-Reset`, and reduce poll frequency on job status endpoints. Prefer spreading tracks over time rather than bursting near the hourly/daily caps. Anonymous `429` responses mention that an API key raises track quotas.
+
+Operators can receive an email when hourly/daily/concurrent track limits trip (cooldown per client; see `API_V1_RATE_LIMIT_ALERT_*`).
 
 ---
 
 ## Async track and poll
 
-`POST /api/v1/track` submits a product URL and waits up to **~25 seconds** (long-poll).
+`POST /api/v1/track` submits a product URL and waits up to **~25 seconds** (long-poll). No API key is required. Send `Authorization: Bearer pwk_live_…` to use [higher per-account track quotas](rate-limits.md).
 
 - Fast shops: `status: "completed"` with full `product` in the same response
 - Slow shops: `status: "running"` + `job_id`: poll `GET /api/v1/jobs/{jobId}` until `completed` or `failed`
@@ -506,7 +529,7 @@ Non-success responses use a structured `error` object. Inspect **`error.code`**:
 | `product_not_found` | 404 | Unknown `product_id` |
 | `scrape_target_not_found` | 404 | Product page not found on the shop |
 | `scrape_chain_exhausted` | 502 | All scraper strategies failed |
-| `rate_limited` | 429 | Per-IP limit exceeded: honor `retry_after_seconds` |
+| `rate_limited` | 429 | Track/read quota exceeded: honor `retry_after_seconds`. Anonymous track is per client IP; API keys use higher per-account track quotas. |
 | `internal_error` | 500 | Unexpected server error |
 
 ### Authentication & API keys
@@ -1142,11 +1165,27 @@ Generate clients in other languages from the [OpenAPI spec](https://github.com/p
 
 ## Changelog
 
-All notable changes to the **public API contract** documented in this repository.
+All notable changes to the **public API contract**, SDKs and MCP server in this repository.
 
-### v1 (first release)
+Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 
-**v1** is the initial API version. The items below describe the first release contract.
+### 0.1.2 - 2026-08-13
+
+#### Changed
+
+- **Track rate limits:** anonymous quotas stay at ~2 concurrent / 10 per minute / 40 per hour / 80 per day. Client identity prefers `CF-Connecting-IP` (then `True-Client-IP`, then `X-Forwarded-For`) so Cloudflare edge IPs are not separate buckets.
+- **Authenticated track quotas:** API key or login session on `POST /track` receives higher **per-account** limits (~4 concurrent / 20 per minute / 120 per hour / 400 per day). The account is stored on the track job even without a callback.
+- MCP callers can be rate-limited by a stable forwarded client id instead of a shared egress IP.
+
+### 0.1.1 - 2026-06-28
+
+#### Changed
+
+- Removed Public Preview branding from API docs, OpenAPI spec and SDKs. Discovery status is **available**.
+
+### 0.1.0 - 2026-06-03
+
+Initial release of the public API, official SDKs and remote MCP server.
 
 #### Added
 
@@ -1165,14 +1204,6 @@ All notable changes to the **public API contract** documented in this repository
 - **Webhooks**: full CRUD at `/api/v1/webhooks`, test delivery, delivery logs (API key required)
 - **Official MCP server**: remote HTTP at `https://mcp.pricewatcha.com` (no API key for MCP connection)
 - **Docs**: API key as default credential; login session token for [headless key bootstrap](headless-bootstrap.md) only
-
-#### Changed
-
-- **`POST /api/v1/track`** returns **HTTP 200** with bounded server-side long-poll (~25s); slow jobs return `status: "running"` for client polling (replaces 202 Accepted)
-- **Search** (`GET /api/v1/search`) includes the full product catalog, not only API-ingested URLs and demo samples
-- **Product IDs** unified to opaque `prod_*` in all responses
-- **Privacy model** documented: product-level intelligence is public; user-specific data is never exposed
-- **MCP server** status: official (not experimental); tools `track_product` + `get_job_status` replace older wait helpers
 
 #### Notes
 

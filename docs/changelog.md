@@ -1,10 +1,26 @@
-# Changelog
+# Changelog {#changelog}
 
-All notable changes to the **public API contract** documented in this repository.
+All notable changes to the **public API contract**, SDKs and MCP server in this repository.
 
-## v1 (first release)
+Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 
-**v1** is the initial API version. The items below describe the first release contract.
+## 0.1.2 - 2026-08-13
+
+### Changed
+
+- **Track rate limits:** anonymous quotas stay at ~2 concurrent / 10 per minute / 40 per hour / 80 per day. Client identity prefers `CF-Connecting-IP` (then `True-Client-IP`, then `X-Forwarded-For`) so Cloudflare edge IPs are not separate buckets.
+- **Authenticated track quotas:** API key or login session on `POST /track` receives higher **per-account** limits (~4 concurrent / 20 per minute / 120 per hour / 400 per day). The account is stored on the track job even without a callback.
+- MCP callers can be rate-limited by a stable forwarded client id instead of a shared egress IP.
+
+## 0.1.1 - 2026-06-28
+
+### Changed
+
+- Removed Public Preview branding from API docs, OpenAPI spec and SDKs. Discovery status is **available**.
+
+## 0.1.0 - 2026-06-03
+
+Initial release of the public API, official SDKs and remote MCP server.
 
 ### Added
 
@@ -23,14 +39,6 @@ All notable changes to the **public API contract** documented in this repository
 - **Webhooks**: full CRUD at `/api/v1/webhooks`, test delivery, delivery logs (API key required)
 - **Official MCP server**: remote HTTP at `{{MCP_URL}}` (no API key for MCP connection)
 - **Docs**: API key as default credential; login session token for [headless key bootstrap](headless-bootstrap.md) only
-
-### Changed
-
-- **`POST /api/v1/track`** returns **HTTP 200** with bounded server-side long-poll (~25s); slow jobs return `status: "running"` for client polling (replaces 202 Accepted)
-- **Search** (`GET /api/v1/search`) includes the full product catalog, not only API-ingested URLs and demo samples
-- **Product IDs** unified to opaque `prod_*` in all responses
-- **Privacy model** documented: product-level intelligence is public; user-specific data is never exposed
-- **MCP server** status: official (not experimental); tools `track_product` + `get_job_status` replace older wait helpers
 
 ### Notes
 

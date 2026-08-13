@@ -2,7 +2,7 @@
 
 <span class="developers-label developers-label--public">Public</span>
 
-No credential required for catalog [search](search.md), product detail, price history and [async track/poll](async-workflows.md).
+No credential required for catalog [search](search.md), product detail, price history and [async track/poll](async-workflows.md). Track without a key uses [anonymous rate limits](rate-limits.md). Send an API key on `POST /track` to use the higher per-account track quotas.
 
 <span class="developers-label developers-label--auth">Requires auth</span>
 

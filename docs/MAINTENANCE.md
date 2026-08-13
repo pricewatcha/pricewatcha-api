@@ -26,7 +26,7 @@ Checks:
 | Content | README | Developer page |
 |---------|--------|----------------|
 | API guides + integrations | Yes (full scroll) | Yes |
-| Changelog | Yes | No (Releases link in Status only) |
+| Changelog | Yes | Yes (`#changelog`) |
 | Interactive API keys | Link only | Yes |
 | App intro + link to pricewatcha.com | Yes (README header) | Lead text |
 

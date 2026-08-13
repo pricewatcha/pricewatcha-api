@@ -2,7 +2,7 @@
 
 <span class="developers-label developers-label--public">Public</span>
 
-`POST /api/v1/track` submits a product URL and waits up to **~25 seconds** (long-poll).
+`POST /api/v1/track` submits a product URL and waits up to **~25 seconds** (long-poll). No API key is required. Send `Authorization: Bearer pwk_live_…` to use [higher per-account track quotas](rate-limits.md).
 
 - Fast shops: `status: "completed"` with full `product` in the same response
 - Slow shops: `status: "running"` + `job_id`: poll `GET /api/v1/jobs/{jobId}` until `completed` or `failed`
