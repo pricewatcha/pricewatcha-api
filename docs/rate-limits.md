@@ -57,6 +57,15 @@ When limited, the API returns `429 Too Many Requests` with a JSON body:
 
 Operators can receive an email when hourly/daily/concurrent track limits trip (cooldown per client; see `API_V1_RATE_LIMIT_ALERT_*`).
 
+## Abuse and IP restrictions {#abuse}
+
+Sustained abuse of the anonymous track quota (for example exhausting the daily limit on several days from the same IP) may trigger an **in-app restriction**, not only `429`.
+
+1. **Notice (grace period).** The API returns HTTP `403` with `error.code` `access_restricted` and a message that a block is pending. Track jobs are not created during this window.
+2. **Block.** If there is no reply, the IP is blocked. Further calls keep returning `403` / `access_restricted` with a shorter blocked message.
+
+Email **[info@pricewatcha.com](mailto:info@pricewatcha.com)** to discuss terms or restore access. Do not retry until access is restored — retries will not lift the restriction.
+
 ---
 
 **Official documentation (full guides):** https://pricewatcha.com/en/developers
