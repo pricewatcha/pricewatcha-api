@@ -4,6 +4,13 @@ All notable changes to the **public API contract**, SDKs and MCP server in this 
 
 Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 
+## 0.1.3 - 2026-08-17
+
+### Changed
+
+- **Track concurrent slots:** `queued`/`processing` jobs older than the scrape timeout are failed automatically (startup + `POST /track`), so a deploy or hung worker cannot block a client forever.
+- **Same-URL retries:** a second `POST /track` for a URL that already has an in-flight job for that client returns the existing `job_id` instead of HTTP 429.
+
 ## 0.1.2 - 2026-08-13
 
 ### Changed

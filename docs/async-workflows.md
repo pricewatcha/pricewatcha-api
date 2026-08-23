@@ -6,6 +6,7 @@
 
 - Fast shops: `status: "completed"` with full `product` in the same response
 - Slow shops: `status: "running"` + `job_id`: poll `GET /api/v1/jobs/{jobId}` until `completed` or `failed`
+- Repeat `POST /track` for the same URL while a job is in flight returns that job instead of starting another (and instead of a concurrent 429)
 
 Jobs are retained for **72 hours**. After expiry, `GET /jobs/{jobId}` returns **404**: use `GET /products/{productId}` instead.
 

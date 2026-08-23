@@ -221,7 +221,7 @@ Send `Authorization: Bearer pwk_live_…` on `POST /track` to use the authentica
 
 **Track quotas are counted from persisted jobs** (`api_track_jobs` by client key or account), so they apply across multiple app instances. A long-poll that holds the HTTP connection for ~25s still counts as **one** track job when created — sequential tracks spaced farther apart than 60s will not trip the burst window, but hourly/daily and concurrent caps still apply.
 
-Agents should prefer: start track → poll `GET /jobs/{id}` with backoff (not every 1–2s) → read product/history once complete.
+Agents should prefer: start track → poll `GET /jobs/{id}` with backoff (not every 1–2s) → read product/history once complete. Retrying `POST /track` with the same URL while that job is still `queued`/`processing` reuses the existing job and does not consume another concurrent slot. Jobs left `queued`/`processing` longer than the scrape timeout (default 600s) are failed so slots cannot leak across deploys.
 
 Exact numbers may change without notice (env overrides: `API_V1_TRACK_*`, `API_V1_TRACK_AUTH_*`, `API_V1_JOB_READ_*`, `API_V1_READ_*`).
 
@@ -264,6 +264,7 @@ Operators can receive an email when hourly/daily/concurrent track limits trip (c
 
 - Fast shops: `status: "completed"` with full `product` in the same response
 - Slow shops: `status: "running"` + `job_id`: poll `GET /api/v1/jobs/{jobId}` until `completed` or `failed`
+- Repeat `POST /track` for the same URL while a job is in flight returns that job instead of starting another (and instead of a concurrent 429)
 
 Jobs are retained for **72 hours**. After expiry, `GET /jobs/{jobId}` returns **404**: use `GET /products/{productId}` instead.
 
@@ -529,6 +530,7 @@ Non-success responses use a structured `error` object. Inspect **`error.code`**:
 | `product_not_found` | 404 | Unknown `product_id` |
 | `scrape_target_not_found` | 404 | Product page not found on the shop |
 | `scrape_chain_exhausted` | 502 | All scraper strategies failed |
+| `scrape_timeout` | 200 (job failed) | Track job exceeded the scrape timeout, or a queued/processing job was reaped after a worker loss |
 | `rate_limited` | 429 | Track/read quota exceeded: honor `retry_after_seconds`. Anonymous track is per client IP; API keys use higher per-account track quotas. |
 | `internal_error` | 500 | Unexpected server error |
 
@@ -1168,6 +1170,13 @@ Generate clients in other languages from the [OpenAPI spec](https://github.com/p
 All notable changes to the **public API contract**, SDKs and MCP server in this repository.
 
 Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
+
+### 0.1.3 - 2026-08-17
+
+#### Changed
+
+- **Track concurrent slots:** `queued`/`processing` jobs older than the scrape timeout are failed automatically (startup + `POST /track`), so a deploy or hung worker cannot block a client forever.
+- **Same-URL retries:** a second `POST /track` for a URL that already has an in-flight job for that client returns the existing `job_id` instead of HTTP 429.
 
 ### 0.1.2 - 2026-08-13
 
