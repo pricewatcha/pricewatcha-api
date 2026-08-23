@@ -12,7 +12,7 @@ Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 - **MCP alert tools:** `create_price_alert`, `list_price_alerts`, `get_price_alert`, `update_price_alert`, `delete_price_alert` (API key required). Same directional flags as the HTTP API.
 - **Google product category:** `google_product_category_id` and `google_product_category_name` on `GET /api/v1/products/{id}`, `GET /api/v1/search` (and MCP `get_product` / `search_products` / completed track jobs). Always present in responses (`null` when unset); search needs no extra query parameter.
 - **Search exclude terms:** `GET /api/v1/search?q=` accepts minus-prefixed tokens (e.g. `iPhone 15 -cover -hülle`) to drop products whose name, shop or URL contains those terms. Case-insensitive. `limit` applies after exclusion.
-- **Abuse / IP restrictions:** repeated anonymous daily-limit hits may return HTTP `403` `access_restricted` (notice/grace period, then block). Contact `info@pricewatcha.com`.
+- **Abuse / IP restrictions:** repeated anonymous daily-limit hits may start a grace/notice period (API still works, `X-Pricewatcha-Restriction: notice`), then a block (`403` `access_restricted`). Contact `info@pricewatcha.com`.
 
 ## 0.1.3 - 2026-08-17
 

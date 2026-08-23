@@ -261,10 +261,10 @@ Operators can receive an email when hourly/daily/concurrent track limits trip (c
 
 Sustained abuse of the anonymous track quota (for example exhausting the daily limit on several days from the same IP) may trigger an **in-app restriction**, not only `429`.
 
-1. **Notice (grace period).** The API returns HTTP `403` with `error.code` `access_restricted` and a message that a block is pending. Track jobs are not created during this window.
-2. **Block.** If there is no reply, the IP is blocked. Further calls keep returning `403` / `access_restricted` with a shorter blocked message.
+1. **Notice (grace period).** Track jobs and other API calls still succeed. Responses include `X-Pricewatcha-Restriction: notice` and `X-Pricewatcha-Restriction-Message` with the pending-block warning. Rate limits still apply.
+2. **Block.** If there is no reply, the IP is blocked. Further calls return HTTP `403` with `error.code` `access_restricted`.
 
-Email **[info@pricewatcha.com](mailto:info@pricewatcha.com)** to discuss terms or restore access. Do not retry until access is restored — retries will not lift the restriction.
+Email **[info@pricewatcha.com](mailto:info@pricewatcha.com)** to discuss terms or restore access. Do not retry until access is restored. Retries will not lift the restriction.
 
 ---
 
@@ -553,7 +553,7 @@ Non-success responses use a structured `error` object. Inspect **`error.code`**:
 | `scrape_chain_exhausted` | 502 | All scraper strategies failed |
 | `scrape_timeout` | 200 (job failed) | Track job exceeded the scrape timeout, or a queued/processing job was reaped after a worker loss |
 | `rate_limited` | 429 | Track/read quota exceeded: honor `retry_after_seconds`. Anonymous track is per client IP; API keys use higher per-account track quotas. |
-| `access_restricted` | 403 | Suspected abuse: the client IP is in a grace/notice period or is already blocked. Email [info@pricewatcha.com](mailto:info@pricewatcha.com). Do not retry until access is restored. |
+| `access_restricted` | 403 | The client IP is blocked after an abuse notice. Email [info@pricewatcha.com](mailto:info@pricewatcha.com). Do not retry until access is restored. During the earlier grace period the API still works and sends `X-Pricewatcha-Restriction: notice`. |
 | `internal_error` | 500 | Unexpected server error |
 
 ### Authentication & API keys
@@ -1324,7 +1324,7 @@ Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 - **MCP alert tools:** `create_price_alert`, `list_price_alerts`, `get_price_alert`, `update_price_alert`, `delete_price_alert` (API key required). Same directional flags as the HTTP API.
 - **Google product category:** `google_product_category_id` and `google_product_category_name` on `GET /api/v1/products/{id}`, `GET /api/v1/search` (and MCP `get_product` / `search_products` / completed track jobs). Always present in responses (`null` when unset); search needs no extra query parameter.
 - **Search exclude terms:** `GET /api/v1/search?q=` accepts minus-prefixed tokens (e.g. `iPhone 15 -cover -hülle`) to drop products whose name, shop or URL contains those terms. Case-insensitive. `limit` applies after exclusion.
-- **Abuse / IP restrictions:** repeated anonymous daily-limit hits may return HTTP `403` `access_restricted` (notice/grace period, then block). Contact `info@pricewatcha.com`.
+- **Abuse / IP restrictions:** repeated anonymous daily-limit hits may start a grace/notice period (API still works, `X-Pricewatcha-Restriction: notice`), then a block (`403` `access_restricted`). Contact `info@pricewatcha.com`.
 
 ### 0.1.3 - 2026-08-17
 
@@ -1415,6 +1415,6 @@ Report vulnerabilities responsibly: [SECURITY.md](SECURITY.md).
 
 Questions about the API, integration issues or unexpected behaviour: **[support@pricewatcha.com](mailto:support@pricewatcha.com)**.
 
-If your IP received HTTP `403` with `access_restricted` (abuse notice or block), write to **[info@pricewatcha.com](mailto:info@pricewatcha.com)** — see [Abuse and IP restrictions](rate-limits.md).
+If your IP received HTTP `403` with `access_restricted`, or a notice header (`X-Pricewatcha-Restriction: notice`), write to **[info@pricewatcha.com](mailto:info@pricewatcha.com)**. See [Abuse and IP restrictions](rate-limits.md).
 
 For bugs or documentation fixes in this repository, [open a GitHub issue](https://github.com/pricewatcha/pricewatcha-api/issues).

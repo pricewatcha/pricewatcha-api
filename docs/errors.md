@@ -36,7 +36,7 @@ Non-success responses use a structured `error` object. Inspect **`error.code`**:
 | `scrape_chain_exhausted` | 502 | All scraper strategies failed |
 | `scrape_timeout` | 200 (job failed) | Track job exceeded the scrape timeout, or a queued/processing job was reaped after a worker loss |
 | `rate_limited` | 429 | Track/read quota exceeded: honor `retry_after_seconds`. Anonymous track is per client IP; API keys use higher per-account track quotas. |
-| `access_restricted` | 403 | Suspected abuse: the client IP is in a grace/notice period or is already blocked. Email [info@pricewatcha.com](mailto:info@pricewatcha.com). Do not retry until access is restored. |
+| `access_restricted` | 403 | The client IP is blocked after an abuse notice. Email [info@pricewatcha.com](mailto:info@pricewatcha.com). Do not retry until access is restored. During the earlier grace period the API still works and sends `X-Pricewatcha-Restriction: notice`. |
 | `internal_error` | 500 | Unexpected server error |
 
 ## Authentication & API keys
