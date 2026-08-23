@@ -7,6 +7,10 @@ export {
 export type { ApiErrorBody } from "./api-error.js";
 export { isApiErrorBody, parseApiErrorPayload } from "./api-error.js";
 export type {
+  Alert,
+  AlertCreateRequest,
+  AlertListOptions,
+  AlertUpdateRequest,
   ApiEndpoint,
   ApiInfoResponse,
   HealthResponse,

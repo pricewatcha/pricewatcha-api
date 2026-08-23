@@ -239,6 +239,76 @@ describe("PricewatchaClient", () => {
     await client.health();
   });
 
+  it("createAlert() posts directional flags without thresholds", async () => {
+    const fetchMock: typeof fetch = async (input, init) => {
+      assert.equal(init?.method, "POST");
+      assert.match(String(input), /\/alerts$/);
+      assert.deepEqual(JSON.parse(String(init?.body)), {
+        product_id: "prod_x",
+        notify_on_drop: true,
+      });
+      return jsonResponse(
+        {
+          alert_id: 76,
+          product_id: "prod_x",
+          min_threshold_price: null,
+          max_threshold_price: null,
+          notify_on_drop: true,
+          notify_on_rise: false,
+          currency: "EUR",
+          webhook_url: null,
+          notify_email: true,
+          name: null,
+          is_active: true,
+          created_at: "2026-08-23T10:00:00Z",
+          updated_at: "2026-08-23T10:00:00Z",
+          last_triggered_at: null,
+        },
+        201,
+      );
+    };
+
+    const client = new PricewatchaClient({
+      baseUrl: "https://example.com/api/v1",
+      apiKey: "pwk_live_test",
+      fetch: fetchMock,
+    });
+    const alert = await client.createAlert({ product_id: "prod_x", notify_on_drop: true });
+    assert.equal(alert.alert_id, 76);
+    assert.equal(alert.notify_on_drop, true);
+    assert.equal(alert.min_threshold_price, null);
+  });
+
+  it("listAlerts() filters by productId", async () => {
+    const fetchMock: typeof fetch = async (input) => {
+      assert.match(String(input), /\/alerts\?product_id=prod_x$/);
+      return jsonResponse([]);
+    };
+
+    const client = new PricewatchaClient({
+      baseUrl: "https://example.com/api/v1",
+      apiKey: "pwk_live_test",
+      fetch: fetchMock,
+    });
+    const alerts = await client.listAlerts({ productId: "prod_x" });
+    assert.deepEqual(alerts, []);
+  });
+
+  it("deleteAlert() accepts 204", async () => {
+    const fetchMock: typeof fetch = async (input, init) => {
+      assert.equal(init?.method, "DELETE");
+      assert.match(String(input), /\/alerts\/76$/);
+      return new Response(null, { status: 204 });
+    };
+
+    const client = new PricewatchaClient({
+      baseUrl: "https://example.com/api/v1",
+      apiKey: "pwk_live_test",
+      fetch: fetchMock,
+    });
+    await client.deleteAlert(76);
+  });
+
   it("search() passes limit as query param", async () => {
     const fetchMock: typeof fetch = async (input) => {
       assert.match(String(input), /[?&]limit=10/);

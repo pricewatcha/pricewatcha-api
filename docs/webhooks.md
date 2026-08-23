@@ -30,7 +30,7 @@ Target URLs must use **HTTPS** and must not resolve to private or internal IP ra
 | `price_dropped` | Price decreased by more than €0.01 |
 | `price_increased` | Price increased by more than €0.01 |
 | `new_historical_low` | New price strictly lower than any previous observation |
-| `price_alert_triggered` | User alert threshold crossed (min and/or max) |
+| `price_alert_triggered` | User alert fired (min/max threshold or directional drop/rise) |
 | `track_job_completed` | Authenticated `POST /track` finished successfully |
 | `track_job_failed` | Authenticated `POST /track` failed |
 | `webhook_test` | Only from `POST /api/v1/webhooks/{webhook_id}/test` |

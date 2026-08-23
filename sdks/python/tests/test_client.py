@@ -217,6 +217,50 @@ def test_api_key_sent_in_header(httpx_mock: pytest.HttpMock) -> None:
     assert request.headers["Authorization"] == "Bearer pwk_live_test"
 
 
+def test_create_alert_directional(httpx_mock: pytest.HttpMock) -> None:
+    httpx_mock.add_response(
+        method="POST",
+        url="https://example.com/api/v1/alerts",
+        status_code=201,
+        json={
+            "alert_id": 76,
+            "product_id": "prod_x",
+            "min_threshold_price": None,
+            "max_threshold_price": None,
+            "notify_on_drop": True,
+            "notify_on_rise": False,
+            "currency": "EUR",
+            "is_active": True,
+        },
+    )
+    client = Pricewatcha(base_url="https://example.com/api/v1", api_key="pwk_live_test")
+    alert = client.create_alert({"product_id": "prod_x", "notify_on_drop": True})
+    assert alert["alert_id"] == 76
+    assert alert["notify_on_drop"] is True
+    request = httpx_mock.get_request()
+    assert request is not None
+    assert request.headers["Authorization"] == "Bearer pwk_live_test"
+
+
+def test_list_alerts_filters_product(httpx_mock: pytest.HttpMock) -> None:
+    httpx_mock.add_response(
+        url="https://example.com/api/v1/alerts?product_id=prod_x",
+        json=[],
+    )
+    client = Pricewatcha(base_url="https://example.com/api/v1", api_key="pwk_live_test")
+    assert client.list_alerts(product_id="prod_x") == []
+
+
+def test_delete_alert(httpx_mock: pytest.HttpMock) -> None:
+    httpx_mock.add_response(
+        method="DELETE",
+        url="https://example.com/api/v1/alerts/76",
+        status_code=204,
+    )
+    client = Pricewatcha(base_url="https://example.com/api/v1", api_key="pwk_live_test")
+    assert client.delete_alert(76) is None
+
+
 def test_search_with_limit(httpx_mock: pytest.HttpMock) -> None:
     httpx_mock.add_response(
         url="https://example.com/api/v1/search?q=phone&limit=10",

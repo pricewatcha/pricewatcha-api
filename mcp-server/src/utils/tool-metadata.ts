@@ -9,6 +9,11 @@ export const TOOL_TITLES = {
   get_product: "Get product",
   get_price_history: "Get price history",
   search_products: "Search products",
+  create_price_alert: "Create price alert",
+  list_price_alerts: "List price alerts",
+  get_price_alert: "Get price alert",
+  update_price_alert: "Update price alert",
+  delete_price_alert: "Delete price alert",
 } as const;
 
 export const READ_ONLY_TOOL_ANNOTATIONS: ToolAnnotations = {
@@ -23,6 +28,27 @@ export const TRACK_PRODUCT_ANNOTATIONS: ToolAnnotations = {
   destructiveHint: false,
   openWorldHint: false,
   idempotentHint: false,
+};
+
+export const CREATE_ALERT_ANNOTATIONS: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  openWorldHint: false,
+  idempotentHint: false,
+};
+
+export const UPDATE_ALERT_ANNOTATIONS: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  openWorldHint: false,
+  idempotentHint: true,
+};
+
+export const DELETE_ALERT_ANNOTATIONS: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  openWorldHint: false,
+  idempotentHint: true,
 };
 
 const jobOutcomeErrorSchema = z
@@ -110,6 +136,39 @@ export const getPriceHistoryOutputSchema = z
       }),
     ),
     preview: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const priceAlertOutputSchema = z
+  .object({
+    alert_id: z.number().int(),
+    product_id: z.string(),
+    min_threshold_price: z.number().nullable().optional(),
+    max_threshold_price: z.number().nullable().optional(),
+    notify_on_drop: z.boolean(),
+    notify_on_rise: z.boolean(),
+    currency: z.string(),
+    webhook_url: z.string().nullable().optional(),
+    notify_email: z.boolean(),
+    name: z.string().nullable().optional(),
+    is_active: z.boolean(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    last_triggered_at: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+export const listPriceAlertsOutputSchema = z
+  .object({
+    count: z.number().int(),
+    alerts: z.array(priceAlertOutputSchema),
+  })
+  .passthrough();
+
+export const deletePriceAlertOutputSchema = z
+  .object({
+    deleted: z.literal(true),
+    alert_id: z.number().int(),
   })
   .passthrough();
 

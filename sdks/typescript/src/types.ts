@@ -102,3 +102,47 @@ export interface PricewatchaClientOptions {
   fetch?: typeof fetch;
   headers?: Record<string, string>;
 }
+
+export interface Alert {
+  alert_id: number;
+  product_id: string;
+  min_threshold_price: number | null;
+  max_threshold_price: number | null;
+  notify_on_drop: boolean;
+  notify_on_rise: boolean;
+  currency: string;
+  webhook_url: string | null;
+  notify_email: boolean;
+  name: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_triggered_at: string | null;
+}
+
+export interface AlertCreateRequest {
+  product_id: string;
+  min_threshold_price?: number | null;
+  max_threshold_price?: number | null;
+  notify_on_drop?: boolean;
+  notify_on_rise?: boolean;
+  currency?: string;
+  webhook_url?: string | null;
+  notify_email?: boolean;
+  name?: string | null;
+}
+
+export interface AlertUpdateRequest {
+  min_threshold_price?: number | null;
+  max_threshold_price?: number | null;
+  notify_on_drop?: boolean;
+  notify_on_rise?: boolean;
+  webhook_url?: string | null;
+  notify_email?: boolean;
+  name?: string | null;
+  is_active?: boolean;
+}
+
+export interface AlertListOptions {
+  productId?: string;
+}

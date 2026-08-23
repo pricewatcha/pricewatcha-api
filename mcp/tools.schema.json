@@ -287,6 +287,116 @@
         },
         "required": ["query", "count", "results"]
       }
+    },
+    {
+      "name": "create_price_alert",
+      "title": "Create price alert",
+      "description": "Create a price alert. Use notify_on_drop / notify_on_rise for any price change without a numeric threshold, and/or min_threshold_price / max_threshold_price. Requires api_key.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["api_key", "product_id"],
+        "properties": {
+          "api_key": { "type": "string", "description": "Pricewatcha API key (pwk_live_...)" },
+          "product_id": { "type": "string" },
+          "notify_on_drop": { "type": "boolean", "description": "Notify on any price drop. No threshold required." },
+          "notify_on_rise": { "type": "boolean", "description": "Notify on any price increase. No threshold required." },
+          "min_threshold_price": { "type": "number", "exclusiveMinimum": 0 },
+          "max_threshold_price": { "type": "number", "exclusiveMinimum": 0 },
+          "notify_email": { "type": "boolean" },
+          "webhook_url": { "type": "string", "format": "uri" },
+          "name": { "type": "string", "maxLength": 128 }
+        }
+      }
+    },
+    {
+      "name": "list_price_alerts",
+      "title": "List price alerts",
+      "description": "List your price alerts. Requires api_key.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["api_key"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "product_id": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "get_price_alert",
+      "title": "Get price alert",
+      "description": "Get one price alert by alert_id. Requires api_key.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["api_key", "alert_id"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "alert_id": { "type": "integer" }
+        }
+      }
+    },
+    {
+      "name": "update_price_alert",
+      "title": "Update price alert",
+      "description": "Update a price alert, including threshold-free notify_on_drop / notify_on_rise. Requires api_key.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["api_key", "alert_id"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "alert_id": { "type": "integer" },
+          "notify_on_drop": { "type": "boolean" },
+          "notify_on_rise": { "type": "boolean" },
+          "min_threshold_price": { "type": ["number", "null"] },
+          "max_threshold_price": { "type": ["number", "null"] },
+          "notify_email": { "type": "boolean" },
+          "webhook_url": { "type": ["string", "null"] },
+          "name": { "type": "string" },
+          "is_active": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "name": "delete_price_alert",
+      "title": "Delete price alert",
+      "description": "Delete a price alert. Requires api_key.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["api_key", "alert_id"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "alert_id": { "type": "integer" }
+        }
+      }
     }
   ]
 }

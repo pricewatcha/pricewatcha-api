@@ -198,6 +198,41 @@ class Pricewatcha:
             raise TypeError(f"Expected dict response, got {type(result).__name__}")
         return result
 
+    def create_alert(self, body: dict[str, Any]) -> dict[str, Any]:
+        """POST /alerts — API key required. Thresholds and/or notify_on_drop/rise."""
+        result = self._request("POST", "/alerts", json=body, expected_status=201)
+        if not isinstance(result, dict):
+            raise TypeError(f"Expected dict response, got {type(result).__name__}")
+        return result
+
+    def list_alerts(self, *, product_id: str | None = None) -> list[dict[str, Any]]:
+        """GET /alerts — API key required."""
+        params: dict[str, str] = {}
+        if product_id is not None:
+            params["product_id"] = product_id
+        result = self._request("GET", "/alerts", params=params or None)
+        if not isinstance(result, list):
+            raise TypeError(f"Expected list response, got {type(result).__name__}")
+        return result
+
+    def get_alert(self, alert_id: int) -> dict[str, Any]:
+        """GET /alerts/{alertId} — API key required."""
+        result = self._request("GET", f"/alerts/{alert_id}")
+        if not isinstance(result, dict):
+            raise TypeError(f"Expected dict response, got {type(result).__name__}")
+        return result
+
+    def update_alert(self, alert_id: int, body: dict[str, Any]) -> dict[str, Any]:
+        """PATCH /alerts/{alertId} — API key required."""
+        result = self._request("PATCH", f"/alerts/{alert_id}", json=body)
+        if not isinstance(result, dict):
+            raise TypeError(f"Expected dict response, got {type(result).__name__}")
+        return result
+
+    def delete_alert(self, alert_id: int) -> None:
+        """DELETE /alerts/{alertId} — API key required."""
+        self._request("DELETE", f"/alerts/{alert_id}", expected_status=204)
+
     def search(self, query: str, *, limit: int | None = None) -> list[dict[str, Any]]:
         """GET /search?q=... — search the public catalog."""
         params: dict[str, str] = {"q": query}

@@ -11,6 +11,10 @@ import type {
   Product,
   SearchResult,
   WaitForJobOptions,
+  Alert,
+  AlertCreateRequest,
+  AlertListOptions,
+  AlertUpdateRequest,
 } from "./types.js";
 
 export const DEFAULT_BASE_URL = "https://pricewatcha.com/api/v1";
@@ -168,6 +172,43 @@ export class PricewatchaClient {
       "GET",
       `/products/${encodeURIComponent(productId)}/price-history`,
     );
+  }
+
+  /** POST /alerts — API key required. At least one setting (threshold or notify_on_drop/rise). */
+  createAlert(body: AlertCreateRequest): Promise<Alert> {
+    return this.request<Alert>("POST", "/alerts", {
+      expectedStatus: 201,
+      body: JSON.stringify(body),
+    });
+  }
+
+  /** GET /alerts — API key required. */
+  listAlerts(options?: AlertListOptions): Promise<Alert[]> {
+    const params = new URLSearchParams();
+    if (options?.productId) {
+      params.set("product_id", options.productId);
+    }
+    const query = params.toString();
+    return this.request<Alert[]>("GET", query ? `/alerts?${query}` : "/alerts");
+  }
+
+  /** GET /alerts/:alertId — API key required. */
+  getAlert(alertId: number): Promise<Alert> {
+    return this.request<Alert>("GET", `/alerts/${encodeURIComponent(String(alertId))}`);
+  }
+
+  /** PATCH /alerts/:alertId — API key required. */
+  updateAlert(alertId: number, body: AlertUpdateRequest): Promise<Alert> {
+    return this.request<Alert>("PATCH", `/alerts/${encodeURIComponent(String(alertId))}`, {
+      body: JSON.stringify(body),
+    });
+  }
+
+  /** DELETE /alerts/:alertId — API key required. */
+  deleteAlert(alertId: number): Promise<void> {
+    return this.request<void>("DELETE", `/alerts/${encodeURIComponent(String(alertId))}`, {
+      expectedStatus: 204,
+    });
   }
 
   /** GET /search?q=... */

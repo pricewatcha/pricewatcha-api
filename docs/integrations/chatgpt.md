@@ -21,5 +21,6 @@
 
 - *“Search for a refurbished iPhone 15 Pro under €550”*
 - *“Track this product URL and show me the price history”*
+- *“Notify me whenever this product gets cheaper — no price target”*
 
 > **Warning:** ChatGPT may show a **DEV** label on unverified third-party connectors. Pricewatcha only works while **Developer Mode** is enabled.

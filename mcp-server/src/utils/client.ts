@@ -17,7 +17,7 @@ export function getApiBaseUrl(): string {
  * Forwards a stable client id (+ shared proxy secret) so API rate limits are
  * keyed per MCP caller, not the MCP service egress IP.
  */
-export function getClient(): PricewatchaClient {
+export function getClient(options?: { apiKey?: string }): PricewatchaClient {
   const baseUrl = getApiBaseUrl();
   const headers: Record<string, string> = {
     "User-Agent": "@pricewatcha/mcp-server/0.1.3",
@@ -28,5 +28,9 @@ export function getClient(): PricewatchaClient {
     headers["X-Pricewatcha-Client-Id"] = clientId;
     headers["X-Pricewatcha-Proxy-Secret"] = secret;
   }
-  return new PricewatchaClient({ baseUrl, headers });
+  return new PricewatchaClient({
+    baseUrl,
+    headers,
+    ...(options?.apiKey ? { apiKey: options.apiKey } : {}),
+  });
 }

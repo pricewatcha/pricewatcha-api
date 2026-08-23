@@ -123,10 +123,10 @@ describe("HTTP MCP server", () => {
 });
 
 describe("createServer", () => {
-  it("registers all 6 tools", () => {
+  it("registers all 11 tools", () => {
     const server = createServer();
     assert.ok(server);
-    assert.equal(MCP_TOOL_NAMES.length, 6);
+    assert.equal(MCP_TOOL_NAMES.length, 11);
     assert.deepEqual([...MCP_TOOL_NAMES], [
       "get_api_status",
       "track_product",
@@ -134,6 +134,11 @@ describe("createServer", () => {
       "get_product",
       "get_price_history",
       "search_products",
+      "create_price_alert",
+      "list_price_alerts",
+      "get_price_alert",
+      "update_price_alert",
+      "delete_price_alert",
     ]);
   });
 });

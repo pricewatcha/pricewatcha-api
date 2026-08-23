@@ -37,6 +37,7 @@ curl -s -X POST "{{API_BASE}}/alerts" \
   -H "Content-Type: application/json" \
   -d '{
     "product_id": "prod_a1b2c3d4e5",
+    "notify_on_drop": true,
     "min_threshold_price": 500.00,
     "webhook_url": "https://your-n8n-instance.com/webhook/abc",
     "notify_email": true

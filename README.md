@@ -49,6 +49,7 @@ curl -s -X POST "https://pricewatcha.com/api/v1/alerts" \
   -H "Content-Type: application/json" \
   -d '{
     "product_id": "prod_a1b2c3d4e5",
+    "notify_on_drop": true,
     "min_threshold_price": 500.00,
     "webhook_url": "https://your-n8n-instance.com/webhook/abc",
     "notify_email": true
@@ -92,7 +93,7 @@ For agents without a browser, use [headless key bootstrap](#api-keys-headless-bo
 curl -s -X POST "https://pricewatcha.com/api/v1/alerts" \
   -H "Authorization: Bearer pwk_live_YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"product_id": "prod_a1b2c3d4e5", "min_threshold_price": 499.00}'
+  -d '{"product_id": "prod_a1b2c3d4e5", "notify_on_drop": true}'
 ```
 
 ---
@@ -568,14 +569,16 @@ Full schemas: live `GET https://pricewatcha.com/api/v1/openapi.json` and the [Op
 
 ## Price Alert API
 
-Create price alerts that send **email notifications** and/or fire **webhooks** when a threshold is crossed.
+Create price alerts that send **email notifications** and/or fire **webhooks** when a price moves.
 
-Each tracked product has **one alert record per user** with optional:
+Each tracked product has **one alert record per user**. Combine any of:
 
-- `min_threshold_price`: notify when price drops to or below
-- `max_threshold_price`: notify when price rises to or above
+- `notify_on_drop`: notify on any price drop (no threshold required)
+- `notify_on_rise`: notify on any price increase (no threshold required)
+- `min_threshold_price`: notify when price drops to or below this value
+- `max_threshold_price`: notify when price rises to or above this value
 
-At least one threshold is required.
+At least one of those four settings is required.
 
 All endpoints require an API key in `Authorization: Bearer …`. Full schemas: `GET https://pricewatcha.com/api/v1/openapi.json` (tag `alerts`).
 
@@ -586,10 +589,26 @@ All endpoints require an API key in `Authorization: Bearer …`. Full schemas: `
 | `GET` | `/api/v1/alerts` | List your alerts. Optional: `?product_id=prod_…` |
 | `POST` | `/api/v1/alerts` | Create alert. `409 alert_already_exists` if one exists: use `PATCH` |
 | `GET` | `/api/v1/alerts/{alertId}` | Get one alert |
-| `PATCH` | `/api/v1/alerts/{alertId}` | Update thresholds, webhook URL, email, name, `is_active` |
+| `PATCH` | `/api/v1/alerts/{alertId}` | Update thresholds, directional flags, webhook URL, email, name, `is_active` |
 | `DELETE` | `/api/v1/alerts/{alertId}` | Delete (`204`) |
 
-### Create a price alert
+### Create a directional alert (no threshold)
+
+Notify whenever the price goes down — same as the dashboard **Cheaper** toggle:
+
+```bash
+curl -s -X POST "https://pricewatcha.com/api/v1/alerts" \
+  -H "Authorization: Bearer pwk_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_id": "prod_a1b2c3d4e5",
+    "notify_on_drop": true,
+    "notify_email": true,
+    "name": "Any drop"
+  }'
+```
+
+### Create a threshold alert
 
 ```bash
 curl -s -X POST "https://pricewatcha.com/api/v1/alerts" \
@@ -613,6 +632,8 @@ Example response (`201`):
   "product_id": "prod_a1b2c3d4e5",
   "min_threshold_price": 499.00,
   "max_threshold_price": 599.00,
+  "notify_on_drop": false,
+  "notify_on_rise": false,
   "currency": "EUR",
   "webhook_url": "https://n8n.example.com/webhook/alert",
   "notify_email": true,
@@ -643,7 +664,7 @@ curl -s "https://pricewatcha.com/api/v1/alerts/76" \
 curl -s -X PATCH "https://pricewatcha.com/api/v1/alerts/76" \
   -H "Authorization: Bearer pwk_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
-  -d '{"min_threshold_price": 479.00, "notify_email": false}'
+  -d '{"notify_on_drop": true, "min_threshold_price": null}'
 
 curl -s -X PATCH "https://pricewatcha.com/api/v1/alerts/76" \
   -H "Authorization: Bearer pwk_live_YOUR_KEY_HERE" \
@@ -684,7 +705,7 @@ Manage subscriptions via `POST https://pricewatcha.com/api/v1/webhooks`. Full sc
 | `price_dropped` | Price decreased by more than €0.01 |
 | `price_increased` | Price increased by more than €0.01 |
 | `new_historical_low` | New price strictly lower than any previous observation |
-| `price_alert_triggered` | User alert threshold crossed (min and/or max) |
+| `price_alert_triggered` | User alert fired (min/max threshold or directional drop/rise) |
 | `track_job_completed` | Authenticated `POST /track` finished successfully |
 | `track_job_failed` | Authenticated `POST /track` failed |
 | `webhook_test` | Only from `POST /api/v1/webhooks/{webhook_id}/test` |
@@ -829,7 +850,7 @@ curl -s -X POST "https://pricewatcha.com/api/v1/webhooks/42/test" \
 
 ## AI Agents & MCP
 
-Pricewatcha exposes a **remote MCP endpoint**: no local installation required. Connect your AI client with the URL below. Available tools include `get_api_status`, `search_products`, `track_product`, `get_job_status`, `get_product` and `get_price_history`.
+Pricewatcha exposes a **remote MCP endpoint**: no local installation required. Connect your AI client with the URL below. Available tools include catalog reads (`get_api_status`, `search_products`, `track_product`, `get_job_status`, `get_product`, `get_price_history`) and price alerts (`create_price_alert`, `list_price_alerts`, `get_price_alert`, `update_price_alert`, `delete_price_alert`). Alert tools require a Pricewatcha API key and can notify on any drop or rise without a numeric threshold.
 
 ```
 https://mcp.pricewatcha.com
@@ -861,7 +882,7 @@ https://mcp.pricewatcha.com
 Click **Add**.
 
 **Step 4: Done**  
-Pricewatcha appears in your connector list with read-only tools (`get_api_status`, `get_job_status`, `get_product`, `get_price_history`, `search_products`) and write tools (`track_product`). You can now use Pricewatcha in any Claude conversation.
+Pricewatcha appears in your connector list with read-only tools (`get_api_status`, `get_job_status`, `get_product`, `get_price_history`, `search_products`, `list_price_alerts`, `get_price_alert`) and write tools (`track_product`, `create_price_alert`, `update_price_alert`, `delete_price_alert`). You can now use Pricewatcha in any Claude conversation.
 
 **Step 5: Configure tool permissions (optional)**  
 Open the connector in your connector list (or return to [claude.ai/settings/connectors](https://claude.ai/settings/connectors)) and expand **Tool permissions**.
@@ -874,7 +895,7 @@ For each tool — or for the whole **Read-only** / **Write** group — choose wh
 | **Require approval** | Claude asks before each call (default for new connectors) |
 | **Never allow** | Tool is blocked |
 
-For everyday price checks and searches, set the read-only tools (or the whole read-only group) to **Always allow**. For `track_product`, pick **Always allow** if you want friction-free tracking, or keep **Require approval** if you prefer to confirm before a product is tracked.
+For everyday price checks and searches, set the read-only tools (or the whole read-only group) to **Always allow**. For `track_product` and alert tools, pick **Always allow** if you want friction-free writes, or keep **Require approval** if you prefer to confirm first. Alert tools need a Pricewatcha API key (`pwk_live_...`).
 
 #### How to connect: Claude Desktop App
 
@@ -885,8 +906,9 @@ Try:
 - *“Find me a refurbished iPhone 15 Pro under €550”*
 - *“Track this product URL and show me the price history”*
 - *“Set an alert for this product when it drops below €500”*
+- *“Notify me whenever this product gets cheaper — no price target”*
 
-> **Note:** `track_product` is a write tool because it creates a tracking job in the background. It does not modify or delete existing data.
+> **Note:** `track_product` is a write tool because it creates a tracking job in the background. It does not modify or delete existing data. Alert tools (`create_price_alert`, `update_price_alert`, `delete_price_alert`) change your saved alerts and require an API key.
 
 ---
 
@@ -913,6 +935,7 @@ https://mcp.pricewatcha.com
 
 - *“Search for a refurbished iPhone 15 Pro under €550”*
 - *“Track this product URL and show me the price history”*
+- *“Notify me whenever this product gets cheaper — no price target”*
 
 > **Warning:** ChatGPT may show a **DEV** label on unverified third-party connectors. Pricewatcha only works while **Developer Mode** is enabled.
 
@@ -1170,6 +1193,13 @@ Generate clients in other languages from the [OpenAPI spec](https://github.com/p
 All notable changes to the **public API contract**, SDKs and MCP server in this repository.
 
 Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
+
+### 0.1.4 - 2026-08-23
+
+#### Added
+
+- **Directional price alerts:** `notify_on_drop` and `notify_on_rise` on `POST`/`PATCH`/`GET /api/v1/alerts`. Either flag is enough — a numeric threshold is no longer required.
+- **MCP alert tools:** `create_price_alert`, `list_price_alerts`, `get_price_alert`, `update_price_alert`, `delete_price_alert` (API key required). Same directional flags as the HTTP API.
 
 ### 0.1.3 - 2026-08-17
 

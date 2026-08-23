@@ -18,8 +18,15 @@ Implemented MCP tools (see mcp-server README):
 | `get_product` | `GET /products/{productId}` |
 | `get_price_history` | `GET /products/{id}/price-history` |
 | `search_products` | `GET /search?q=` |
+| `create_price_alert` | `POST /alerts` (API key) |
+| `list_price_alerts` | `GET /alerts` (API key) |
+| `get_price_alert` | `GET /alerts/{id}` (API key) |
+| `update_price_alert` | `PATCH /alerts/{id}` (API key) |
+| `delete_price_alert` | `DELETE /alerts/{id}` (API key) |
 
-> Webhook and alert management tools are planned for a future release.
+Alert tools accept `notify_on_drop` / `notify_on_rise` (any price change, no threshold) and optional `min_threshold_price` / `max_threshold_price`. Pass `api_key` (`pwk_live_...`) on each alert tool call.
+
+> Webhook management tools are planned for a future release.
 
 ## Connecting to Claude or ChatGPT
 
@@ -64,4 +71,4 @@ No API key is required for the MCP connection.
 2. `track_product` waits ~25s server-side; if status is `running`, poll `get_job_status`.
 3. Treat prices as informational; verify on merchant sites.
 4. Honor HTTP `429` and rate limit headers.
-5. To manage alerts or webhooks via MCP tools, the user needs a Pricewatcha API key (`pwk_live_...`) — create one at pricewatcha.com/en/developers.
+5. Alert tools require a Pricewatcha API key (`pwk_live_...`) — create one at pricewatcha.com/en/developers. Pass it as `api_key`. Webhook management tools are not yet available via MCP.

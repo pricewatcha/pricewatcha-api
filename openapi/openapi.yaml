@@ -854,12 +854,29 @@ components:
 
     AlertCreateRequest:
       type: object
-      required: [product_id, threshold_price]
+      required: [product_id]
+      description: >
+        At least one of min_threshold_price, max_threshold_price,
+        notify_on_drop, or notify_on_rise is required.
       properties:
         product_id:
           type: string
-        threshold_price:
+        min_threshold_price:
           type: number
+          exclusiveMinimum: 0
+          description: Notify when price drops to or below this value.
+        max_threshold_price:
+          type: number
+          exclusiveMinimum: 0
+          description: Notify when price rises to or above this value.
+        notify_on_drop:
+          type: boolean
+          default: false
+          description: Notify on any price drop (no threshold required).
+        notify_on_rise:
+          type: boolean
+          default: false
+          description: Notify on any price increase (no threshold required).
         webhook_url:
           type: string
           format: uri
@@ -870,9 +887,22 @@ components:
 
     AlertUpdateRequest:
       type: object
+      description: >
+        At least one of min_threshold_price, max_threshold_price,
+        notify_on_drop, or notify_on_rise must remain after update.
       properties:
-        threshold_price:
+        min_threshold_price:
           type: number
+          exclusiveMinimum: 0
+          nullable: true
+        max_threshold_price:
+          type: number
+          exclusiveMinimum: 0
+          nullable: true
+        notify_on_drop:
+          type: boolean
+        notify_on_rise:
+          type: boolean
         webhook_url:
           type: string
           format: uri
@@ -880,17 +910,34 @@ components:
           type: boolean
         name:
           type: string
+        is_active:
+          type: boolean
 
     AlertResponse:
       type: object
-      required: [id, product_id, threshold_price, created_at]
+      required:
+        - alert_id
+        - product_id
+        - notify_on_drop
+        - notify_on_rise
+        - created_at
       properties:
-        id:
-          type: string
+        alert_id:
+          type: integer
         product_id:
           type: string
-        threshold_price:
+        min_threshold_price:
           type: number
+          nullable: true
+        max_threshold_price:
+          type: number
+          nullable: true
+        notify_on_drop:
+          type: boolean
+        notify_on_rise:
+          type: boolean
+        currency:
+          type: string
         webhook_url:
           type: string
           format: uri
@@ -899,9 +946,19 @@ components:
           type: boolean
         name:
           type: string
+          nullable: true
+        is_active:
+          type: boolean
         created_at:
           type: string
           format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_triggered_at:
+          type: string
+          format: date-time
+          nullable: true
 
     AlertListResponse:
       type: object

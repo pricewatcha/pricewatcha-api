@@ -65,6 +65,11 @@ console.log(job.product);
 | `getProduct(id)` | `GET /products/{id}` | Product intelligence |
 | `getPriceHistory(id)` | `GET /products/{id}/price-history` | History & trend |
 | `search(query)` | `GET /search?q=` | Full catalog search (name, URL, shop) |
+| `createAlert(body)` | `POST /alerts` | Create alert (`notify_on_drop` / `notify_on_rise` and/or thresholds). API key required |
+| `listAlerts(options?)` | `GET /alerts` | List alerts. API key required |
+| `getAlert(id)` | `GET /alerts/{id}` | Get one alert. API key required |
+| `updateAlert(id, body)` | `PATCH /alerts/{id}` | Update alert. API key required |
+| `deleteAlert(id)` | `DELETE /alerts/{id}` | Delete alert. API key required |
 
 ## Configuration
 

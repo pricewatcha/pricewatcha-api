@@ -10,5 +10,5 @@ For agents without a browser, use [headless key bootstrap](#api-keys-headless-bo
 curl -s -X POST "{{API_BASE}}/alerts" \
   -H "Authorization: Bearer pwk_live_YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"product_id": "prod_a1b2c3d4e5", "min_threshold_price": 499.00}'
+  -d '{"product_id": "prod_a1b2c3d4e5", "notify_on_drop": true}'
 ```

@@ -18,7 +18,7 @@ https://mcp.pricewatcha.com
 | **ChatGPT** | Settings → Apps → Connect an app → paste URL |
 | **Other MCP clients** | Use the URL above with Streamable HTTP transport |
 
-No API key required for read operations. For alerts and webhooks (planned): create a key at [pricewatcha.com/en/developers](https://pricewatcha.com/en/developers).
+No API key required for catalog reads. Price-alert tools require a key from [pricewatcha.com/en/developers](https://pricewatcha.com/en/developers).
 
 See also [`../mcp/README.md`](../mcp/README.md).
 
@@ -31,10 +31,11 @@ MCP clients (Claude, ChatGPT and custom agents) can call tools to:
 - Poll tracking jobs
 - Read product data and price history
 - Search the full product catalog (name, URL, shop/platform)
+- Create and manage price alerts — including drop/rise notifications without a numeric threshold
 
-No Pricewatcha API key is required for the upstream `/api/v1` read endpoints or for the public MCP connection at `https://mcp.pricewatcha.com`.
+No Pricewatcha API key is required for the upstream `/api/v1` read endpoints or for the public MCP connection at `https://mcp.pricewatcha.com`. Alert tools take `api_key` (`pwk_live_...`).
 
-> Webhook and alert management MCP tools are planned for a future release. Alerts and webhooks are available via the HTTP API with an API key (`pwk_live_...`).
+> Webhook management MCP tools are planned for a future release. Webhooks remain available via the HTTP API.
 
 ## Available tools
 
@@ -46,6 +47,11 @@ No Pricewatcha API key is required for the upstream `/api/v1` read endpoints or 
 | `get_product` | Product intelligence by `product_id` |
 | `get_price_history` | History, trend, aggregates |
 | `search_products` | Keyword search |
+| `create_price_alert` | Create an alert (`notify_on_drop` / `notify_on_rise` and/or thresholds). Requires `api_key` |
+| `list_price_alerts` | List your alerts. Requires `api_key` |
+| `get_price_alert` | Get one alert. Requires `api_key` |
+| `update_price_alert` | Update thresholds, directional flags, or status. Requires `api_key` |
+| `delete_price_alert` | Delete an alert. Requires `api_key` |
 
 ## Example agent workflows
 

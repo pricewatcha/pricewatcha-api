@@ -4,6 +4,13 @@ All notable changes to the **public API contract**, SDKs and MCP server in this 
 
 Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 
+## 0.1.4 - 2026-08-23
+
+### Added
+
+- **Directional price alerts:** `notify_on_drop` and `notify_on_rise` on `POST`/`PATCH`/`GET /api/v1/alerts`. Either flag is enough — a numeric threshold is no longer required.
+- **MCP alert tools:** `create_price_alert`, `list_price_alerts`, `get_price_alert`, `update_price_alert`, `delete_price_alert` (API key required). Same directional flags as the HTTP API.
+
 ## 0.1.3 - 2026-08-17
 
 ### Changed

@@ -59,6 +59,11 @@ print(job["product"])
 | `get_product(id)` | `GET /products/{id}` | Product intelligence |
 | `get_price_history(id)` | `GET /products/{id}/price-history` | History & trend |
 | `search(query)` | `GET /search?q=` | Full catalog search (name, URL, shop) |
+| `create_alert(body)` | `POST /alerts` | Create alert (`notify_on_drop` / `notify_on_rise` and/or thresholds). API key required |
+| `list_alerts(...)` | `GET /alerts` | List alerts. API key required |
+| `get_alert(id)` | `GET /alerts/{id}` | Get one alert. API key required |
+| `update_alert(id, body)` | `PATCH /alerts/{id}` | Update alert. API key required |
+| `delete_alert(id)` | `DELETE /alerts/{id}` | Delete alert. API key required |
 
 ## Configuration
 
