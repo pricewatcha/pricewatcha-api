@@ -1,0 +1,20 @@
+---
+description: When changing the public API contract, update docs and both OpenAPI specs
+globs: docs/**/*.md,openapi/**/*.yaml,mcp-server/src/tools/**/*.ts,mcp/tools.schema.json
+alwaysApply: false
+---
+
+# Public API contract updates
+
+Canonical guides live in `docs/`. Do not edit `README.md` by hand.
+
+After any semantic change to endpoints, query params, or response fields:
+
+1. Edit the matching file under `docs/` (and `docs/changelog.md`).
+2. Run `python scripts/build_readme.py`.
+3. Update **`openapi/openapi.yaml`** (GitHub contract). Query params need a `description`.
+4. Update **`../price_tracker/app/api/v1/openapi_spec.py`** (live `GET /openapi.json`).
+5. Run `../price_tracker/scripts/sync_api_docs.sh` and commit `app/api_docs/`.
+6. If an MCP tool is affected: `mcp-server/src/tools/*.ts` and `mcp/tools.schema.json`.
+
+Checks: `python scripts/build_readme.py --check` and `python scripts/verify_openapi_query_descriptions.py`.

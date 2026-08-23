@@ -1,0 +1,22 @@
+name: Docs and OpenAPI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: README is generated from docs/
+        run: python scripts/build_readme.py --check
+
+      - name: OpenAPI query parameters have descriptions
+        run: python scripts/verify_openapi_query_descriptions.py
