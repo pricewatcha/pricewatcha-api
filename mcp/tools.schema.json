@@ -249,7 +249,7 @@
     {
       "name": "search_products",
       "title": "Search products",
-      "description": "Search the full Pricewatcha product catalog by keyword (name, URL, shop/platform). Returns product-level fields only — no user data.",
+      "description": "Searches the Pricewatcha product catalog by keyword. Supports minus-prefixed exclude terms: e.g. \"iPhone 15 -cover -hülle -case\" returns devices only.",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
@@ -260,7 +260,7 @@
         "type": "object",
         "required": ["query"],
         "properties": {
-          "query": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Search term" }
+          "query": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Search keywords. Supports minus-prefixed exclude terms: e.g. \"iPhone 15 -cover -hülle\"" }
         }
       },
       "outputSchema": {
