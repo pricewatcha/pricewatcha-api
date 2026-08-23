@@ -415,10 +415,13 @@ Keyword search is **case-insensitive** and matches product name, URL, platform/s
 
 `GET https://pricewatcha.com/api/v1/search?q=…&limit=…`
 
-Optional `limit`: default **50**, maximum **200**.
+Optional `limit`: default **50**, maximum **200**. Applied after exclude-term filtering.
+
+`q` supports Google-style minus-prefixed exclude terms. `q=iPhone+15+-cover+-hülle` returns products matching "iPhone 15" that do **not** contain "cover" or "hülle" in name, shop or URL (case-insensitive). A lone `-` is ignored.
 
 ```bash
 curl -s "https://pricewatcha.com/api/v1/search?q=iphone&limit=10"
+curl -s "https://pricewatcha.com/api/v1/search?q=iPhone+15+-cover+-hülle+-case"
 ```
 
 ### Example response
@@ -433,7 +436,9 @@ curl -s "https://pricewatcha.com/api/v1/search?q=iphone&limit=10"
     "current_price": 563,
     "currency": "EUR",
     "status": "active",
-    "preview": true
+    "preview": true,
+    "google_product_category_id": null,
+    "google_product_category_name": null
   },
   {
     "product_id": "prod_a1b2c3d4e5",
@@ -442,12 +447,16 @@ curl -s "https://pricewatcha.com/api/v1/search?q=iphone&limit=10"
     "product_url": "https://swappie.com/de/p/iphone-15-pro/",
     "current_price": 505,
     "currency": "EUR",
-    "status": "active"
+    "status": "active",
+    "google_product_category_id": null,
+    "google_product_category_name": null
   }
 ]
 ```
 
 Use `product_url` for direct linking without an extra `GET /products/{id}` call.
+
+Results always include `google_product_category_id` and `google_product_category_name` (`null` when unset). You do not need an extra query parameter.
 
 ### Demo catalog (no scrape required)
 
@@ -1200,6 +1209,8 @@ Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 
 - **Directional price alerts:** `notify_on_drop` and `notify_on_rise` on `POST`/`PATCH`/`GET /api/v1/alerts`. Either flag is enough — a numeric threshold is no longer required.
 - **MCP alert tools:** `create_price_alert`, `list_price_alerts`, `get_price_alert`, `update_price_alert`, `delete_price_alert` (API key required). Same directional flags as the HTTP API.
+- **Google product category:** `google_product_category_id` and `google_product_category_name` on `GET /api/v1/products/{id}`, `GET /api/v1/search` (and MCP `get_product` / `search_products` / completed track jobs). Always present in responses (`null` when unset); search needs no extra query parameter.
+- **Search exclude terms:** `GET /api/v1/search?q=` accepts minus-prefixed tokens (e.g. `iPhone 15 -cover -hülle`) to drop products whose name, shop or URL contains those terms. Case-insensitive. `limit` applies after exclusion.
 
 ### 0.1.3 - 2026-08-17
 

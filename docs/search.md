@@ -6,10 +6,13 @@ Keyword search is **case-insensitive** and matches product name, URL, platform/s
 
 `GET {{API_BASE}}/search?q=…&limit=…`
 
-Optional `limit`: default **50**, maximum **200**.
+Optional `limit`: default **50**, maximum **200**. Applied after exclude-term filtering.
+
+`q` supports Google-style minus-prefixed exclude terms. `q=iPhone+15+-cover+-hülle` returns products matching "iPhone 15" that do **not** contain "cover" or "hülle" in name, shop or URL (case-insensitive). A lone `-` is ignored.
 
 ```bash
 curl -s "{{API_BASE}}/search?q=iphone&limit=10"
+curl -s "{{API_BASE}}/search?q=iPhone+15+-cover+-hülle+-case"
 ```
 
 ## Example response
@@ -24,7 +27,9 @@ curl -s "{{API_BASE}}/search?q=iphone&limit=10"
     "current_price": 563,
     "currency": "EUR",
     "status": "active",
-    "preview": true
+    "preview": true,
+    "google_product_category_id": null,
+    "google_product_category_name": null
   },
   {
     "product_id": "prod_a1b2c3d4e5",
@@ -33,12 +38,16 @@ curl -s "{{API_BASE}}/search?q=iphone&limit=10"
     "product_url": "https://swappie.com/de/p/iphone-15-pro/",
     "current_price": 505,
     "currency": "EUR",
-    "status": "active"
+    "status": "active",
+    "google_product_category_id": null,
+    "google_product_category_name": null
   }
 ]
 ```
 
 Use `product_url` for direct linking without an extra `GET /products/{id}` call.
+
+Results always include `google_product_category_id` and `google_product_category_name` (`null` when unset). You do not need an extra query parameter.
 
 ## Demo catalog (no scrape required)
 
