@@ -44,7 +44,7 @@ class Pricewatcha:
         if client is not None:
             self._client = client
         else:
-            headers: dict[str, str] = {"User-Agent": "pricewatcha-python/0.1.3"}
+            headers: dict[str, str] = {"User-Agent": "pricewatcha-python/0.1.4"}
             if api_key:
                 headers["Authorization"] = f"Bearer {api_key}"
             self._client = httpx.Client(timeout=timeout, headers=headers)
