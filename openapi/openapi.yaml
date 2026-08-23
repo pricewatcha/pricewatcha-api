@@ -226,6 +226,9 @@ paths:
       summary: Search product catalog
       description: |
         Case-insensitive keyword search over product name, URL, platform/shop, and related fields.
+        Supports Google-style minus-prefixed exclude terms (e.g. `iPhone 15 -cover -hülle`):
+        matching products that contain an exclude term in name, shop or URL are dropped.
+        `limit` applies after exclusion. A lone `-` is ignored.
         Returns all catalog products with public product-level fields (dashboard, API, MCP, and demo).
         Does not expose user accounts, emails, watchlists, or alert settings.
       parameters:
@@ -236,7 +239,11 @@ paths:
             type: string
             minLength: 1
             maxLength: 200
-          example: iphone 15 pro
+          description: |
+            Search query. Supports minus-prefixed exclude terms: e.g. "iPhone 15 -cover -hülle"
+            returns products matching "iPhone 15" that do not contain "cover" or "hülle" in
+            name, shop or URL. Case-insensitive.
+          example: iPhone 15 -cover -hülle
         - name: limit
           in: query
           required: false
@@ -245,7 +252,7 @@ paths:
             minimum: 1
             maximum: 200
             default: 50
-          description: Maximum number of results to return (default 50, max 200)
+          description: Maximum number of results to return after exclusion filtering (default 50, max 200)
       responses:
         "200":
           description: Search results
