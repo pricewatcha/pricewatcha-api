@@ -257,6 +257,15 @@ When limited, the API returns `429 Too Many Requests` with a JSON body:
 
 Operators can receive an email when hourly/daily/concurrent track limits trip (cooldown per client; see `API_V1_RATE_LIMIT_ALERT_*`).
 
+### Abuse and IP restrictions
+
+Sustained abuse of the anonymous track quota (for example exhausting the daily limit on several days from the same IP) may trigger an **in-app restriction**, not only `429`.
+
+1. **Notice (grace period).** The API returns HTTP `403` with `error.code` `access_restricted` and a message that a block is pending. Track jobs are not created during this window.
+2. **Block.** If there is no reply, the IP is blocked. Further calls keep returning `403` / `access_restricted` with a shorter blocked message.
+
+Email **[info@pricewatcha.com](mailto:info@pricewatcha.com)** to discuss terms or restore access. Do not retry until access is restored — retries will not lift the restriction.
+
 ---
 
 ## Async track and poll
@@ -481,6 +490,8 @@ Catalog **price intelligence** (current price, history, product metadata) is ava
 - `product_id`, name, shop/platform, product URL
 - Current price, currency, last checked, status
 - Price history, historical low/high, average, trend
+- `data_source` and `data_source_label` when price data comes directly from a merchant feed (`merchant_feed` → `"Direct merchant data"`)
+- `google_product_category_id` and `google_product_category_name` on product detail and search (null when unset). Search does not require an extra query parameter.
 - Demo entries may include `"preview": true`
 
 Search, product detail and price history return the same fields whether the product was added via dashboard, API, MCP or demo data.
@@ -542,6 +553,7 @@ Non-success responses use a structured `error` object. Inspect **`error.code`**:
 | `scrape_chain_exhausted` | 502 | All scraper strategies failed |
 | `scrape_timeout` | 200 (job failed) | Track job exceeded the scrape timeout, or a queued/processing job was reaped after a worker loss |
 | `rate_limited` | 429 | Track/read quota exceeded: honor `retry_after_seconds`. Anonymous track is per client IP; API keys use higher per-account track quotas. |
+| `access_restricted` | 403 | Suspected abuse: the client IP is in a grace/notice period or is already blocked. Email [info@pricewatcha.com](mailto:info@pricewatcha.com). Do not retry until access is restored. |
 | `internal_error` | 500 | Unexpected server error |
 
 ### Authentication & API keys
@@ -1129,34 +1141,135 @@ No API key required for read endpoints. Polling is simpler but less real-time th
 
 ### Loxone
 
-**What it enables:** Receive price-alert webhooks on your Miniserver and drive programs from virtual inputs.
+**What it enables:** Poll current prices from Pricewatcha on a schedule and trigger Loxone programs when a price threshold is reached. Works with both Miniserver Generation 1 and Generation 2.
 
-**Typical use case:** JSON webhook → virtual input `ViPriceAlert` pulses → lighting or push notification.
+#### Path A — Poll current price (Virtueller HTTP Eingang)
 
-#### Path A: Virtual HTTP Input (recommended)
+Loxone's **Virtueller HTTP Eingang** (Virtual HTTP Input) fetches a URL at a configurable interval and extracts values via **Command Recognition**. Each extracted value becomes a Loxone input that can be used in your programs.
 
-1. Add a **Virtual HTTP Input** in Loxone Config (POST from the internet if reachable).
-2. Create a Pricewatcha alert with that `webhook_url`.
-3. Use **command recognition** on the raw JSON; map values to your program.
+**Gen2 — direct HTTPS (no middleware needed)**
 
-Example patterns for `price_alert_triggered` (match exact spacing in the monitor):
+Miniserver Gen2 supports HTTPS natively and can call the Pricewatcha API directly.
 
-| Field | Pattern |
-|-------|---------|
-| Product name | `"name": "\a` |
-| Current price | `"new_price": \v` |
-| Threshold | `"min_threshold_price": \v` |
-| Event type | `"event_type": "\a` |
+**Gen1 — via LoxBerry https2http Plugin**
 
-See [Loxone Command Recognition](https://www.loxone.com/enen/kb/command-recognition/).
+Miniserver Gen1 does not support HTTPS. Install the [https2http Plugin](https://wiki.loxberry.de/plugins/https2http/start) on LoxBerry. It acts as an HTTPS proxy: LoxBerry fetches the Pricewatcha HTTPS response and serves it to Loxone over HTTP.
 
-#### Path B: Poll current price
+**Step 1 — Find your product ID**
 
-1. **Virtual HTTP Output** on a schedule.
-2. `GET https://pricewatcha.com/api/v1/products/prod_YOUR_PRODUCT_ID`
-3. Extract `"current_price": \v` via command recognition.
+Search for your product and note the `product_id` (format: `prod_...` or use a demo product like `demo_iphone_15_pro`):
 
-> **Remote access:** Pricewatcha must reach your webhook URL over HTTPS: use Loxone Remote Connect or a reverse proxy.
+```
+GET https://pricewatcha.com/api/v1/search?q=YOUR+PRODUCT
+```
+
+**Step 2 — Create a Virtueller HTTP Eingang in Loxone Config**
+
+In Loxone Config, go to **Periphery → Virtual Inputs → Virtual HTTP Input**.
+
+Set the URL based on your Miniserver generation:
+
+| Generation | URL to enter |
+|---|---|
+| **Gen2** (direct) | `https://pricewatcha.com/api/v1/products/prod_YOUR_PRODUCT_ID` |
+| **Gen1** (via LoxBerry) | `http://YOUR_LOXBERRY_IP/plugins/https2http/?url=https://pricewatcha.com/api/v1/products/prod_YOUR_PRODUCT_ID` |
+
+Set the **polling interval** (Abfragezyklus), e.g. `3600` seconds (every hour).
+
+No API key or authentication required — the product endpoint is public.
+
+**Step 3 — Add Virtueller HTTP Eingang Befehle (Command Recognition)**
+
+For each value you want to extract, add a **Virtueller HTTP Eingang Befehl** (Virtual HTTP Input Command) to the input. Command Recognition searches the raw JSON response for a pattern and extracts a value.
+
+The Pricewatcha product API returns JSON like this:
+
+```json
+{
+  "product_id":"prod_...",
+  "name":"Apple iPhone 15 Pro 128GB (Refurbished)",
+  "shop":"Back Market",
+  "current_price":563.0,
+  "currency":"EUR",
+  "status":"active"
+}
+```
+
+Add one Befehl per value you need:
+
+| Value | Command Recognition pattern |
+|-------|---------------------------|
+| Current price (numeric) | `"current_price":\v` |
+| Product name (text) | `"name":"\a` |
+| Shop name (text) | `"shop":"\a` |
+| Currency (text) | `"currency":"\a` |
+
+**Pattern syntax reference:**
+
+- `\v` — extracts a **numeric** value at this position
+- `\a` — extracts a **text** value (reads until next `"`)
+- `\i...\i` — skip/ignore text between markers (use to navigate to the right position in the JSON)
+
+> **Note:** **Tip:** Loxone Config has a built-in pattern tester. When entering the Command Recognition pattern, click the **>** button on the right side of the input field. The **Edit Command Recognition** dialog opens — enter the Pricewatcha product URL, click **"Daten abfragen"**, and Loxone Config fetches the live response and highlights the matched value in green. This lets you verify each pattern before saving.
+
+
+
+**Step 4 — Connect to your program**
+
+Each Befehl output is a numeric or text value you can use directly in Loxone programs:
+
+- Connect `current_price` to a **Threshold Switch** (Schalter mit Schwellwert) → fires when price drops below your target
+- Connect the threshold switch output to a **Push Notification**, lighting scene, or any other Loxone action
+
+> **Note:** **No API key required** — the product detail endpoint is public. You only need an API key for alerts and webhooks (Path B).
+
+
+
+#### Path B — Real-time price alerts via LoxBerry
+
+Loxone cannot directly receive Pricewatcha webhooks because Pricewatcha requires a publicly reachable HTTPS endpoint, and the Miniserver is typically behind NAT without a public IP. This applies to both Gen1 and Gen2.
+
+LoxBerry acts as the middleware: it receives the Pricewatcha webhook and forwards the data to the Miniserver via MQTT.
+
+The receiver URL depends on your LoxBerry version:
+
+| LoxBerry version | Receiver URL |
+|---|---|
+| **3.0+** (MQTT built-in, no plugin needed) | `http://YOUR_LOXBERRY_IP/system/tools/mqtt/receive.php` |
+| **2.x** (install MQTT Gateway Plugin first) | `http://YOUR_LOXBERRY_IP/plugins/mqttgateway/receive.php` |
+
+**Step 1 — Create a Pricewatcha API key**
+
+Create an [API key](#api-keys-headless-bootstrap) on this page (requires login). Alerts and webhooks require authentication.
+
+**Step 2 — Create a Pricewatcha price alert pointing to LoxBerry**
+
+```bash
+curl -s -X POST "https://pricewatcha.com/api/v1/alerts" \
+  -H "Authorization: Bearer pwk_live_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_id": "prod_YOUR_PRODUCT_ID",
+    "min_threshold_price": 500.00,
+    "webhook_url": "http://YOUR_LOXBERRY_IP/system/tools/mqtt/receive.php",
+    "notify_email": false,
+    "name": "Price drop alert"
+  }'
+```
+
+**Step 3 — Configure LoxBerry MQTT Subscriptions**
+
+In the LoxBerry MQTT configuration, subscribe to topic `rcvr/#`. The incoming JSON payload is parsed automatically. Map the relevant fields (e.g. `event_type`, `price/new_price`) to Loxone Virtual Inputs via MQTT subscriptions.
+
+**Step 4 — In Loxone Config**
+
+Connect the Virtual Input (triggered by the MQTT subscription) to your notification or automation program.
+
+> **Warning:** **Public reachability required:** Pricewatcha must reach your LoxBerry webhook URL over the internet. Use **Loxone Remote Connect** or configure port forwarding on your router. For local testing without internet exposure, use the Pricewatcha test endpoint to trigger a manual delivery: `POST https://pricewatcha.com/api/v1/webhooks/{id}/test`
+
+
+
+> **Note:** **Alternative middleware:** ioBroker with its Loxone adapter can also serve as middleware for receiving Pricewatcha webhooks. See the [ioBroker documentation](https://www.iobroker.net) for setup details.
 
 ---
 
@@ -1211,6 +1324,7 @@ Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 - **MCP alert tools:** `create_price_alert`, `list_price_alerts`, `get_price_alert`, `update_price_alert`, `delete_price_alert` (API key required). Same directional flags as the HTTP API.
 - **Google product category:** `google_product_category_id` and `google_product_category_name` on `GET /api/v1/products/{id}`, `GET /api/v1/search` (and MCP `get_product` / `search_products` / completed track jobs). Always present in responses (`null` when unset); search needs no extra query parameter.
 - **Search exclude terms:** `GET /api/v1/search?q=` accepts minus-prefixed tokens (e.g. `iPhone 15 -cover -hülle`) to drop products whose name, shop or URL contains those terms. Case-insensitive. `limit` applies after exclusion.
+- **Abuse / IP restrictions:** repeated anonymous daily-limit hits may return HTTP `403` `access_restricted` (notice/grace period, then block). Contact `info@pricewatcha.com`.
 
 ### 0.1.3 - 2026-08-17
 
@@ -1300,5 +1414,7 @@ Report vulnerabilities responsibly: [SECURITY.md](SECURITY.md).
 ## Support
 
 Questions about the API, integration issues or unexpected behaviour: **[support@pricewatcha.com](mailto:support@pricewatcha.com)**.
+
+If your IP received HTTP `403` with `access_restricted` (abuse notice or block), write to **[info@pricewatcha.com](mailto:info@pricewatcha.com)** — see [Abuse and IP restrictions](rate-limits.md).
 
 For bugs or documentation fixes in this repository, [open a GitHub issue](https://github.com/pricewatcha/pricewatcha-api/issues).
