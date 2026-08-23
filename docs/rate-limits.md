@@ -61,10 +61,10 @@ Operators can receive an email when hourly/daily/concurrent track limits trip (c
 
 Sustained abuse of the anonymous track quota (for example exhausting the daily limit on several days from the same IP) may trigger an **in-app restriction**, not only `429`.
 
-1. **Notice (grace period).** The API returns HTTP `403` with `error.code` `access_restricted` and a message that a block is pending. Track jobs are not created during this window.
-2. **Block.** If there is no reply, the IP is blocked. Further calls keep returning `403` / `access_restricted` with a shorter blocked message.
+1. **Notice (grace period).** Track jobs and other API calls still succeed. Responses include `X-Pricewatcha-Restriction: notice` and `X-Pricewatcha-Restriction-Message` with the pending-block warning. Rate limits still apply.
+2. **Block.** If there is no reply, the IP is blocked. Further calls return HTTP `403` with `error.code` `access_restricted`.
 
-Email **[info@pricewatcha.com](mailto:info@pricewatcha.com)** to discuss terms or restore access. Do not retry until access is restored — retries will not lift the restriction.
+Email **[info@pricewatcha.com](mailto:info@pricewatcha.com)** to discuss terms or restore access. Do not retry until access is restored. Retries will not lift the restriction.
 
 ---
 
