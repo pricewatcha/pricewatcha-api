@@ -4,6 +4,12 @@ All notable changes to the **public API contract**, SDKs and MCP server in this 
 
 Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 
+## 0.1.5 - 2026-08-24
+
+### Changed
+
+- **Search matching:** `GET /api/v1/search?q=` uses case-insensitive **token AND** (all terms must appear; order does not matter) instead of requiring the full query as one contiguous substring. Hyphens, slashes and similar punctuation are normalized to spaces (`Obi-Wan` ≡ `Obi Wan`, `1/6` ≡ `1 6`). Contiguous phrase matches still rank higher. Minus-prefixed exclude terms are unchanged.
+
 ## 0.1.4 - 2026-08-23
 
 ### Added
