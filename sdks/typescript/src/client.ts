@@ -41,7 +41,7 @@ export class PricewatchaClient {
     this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
     this.fetchFn = options.fetch ?? globalThis.fetch;
     this.headers = {
-      "User-Agent": "@pricewatcha/sdk/0.1.4",
+      "User-Agent": "@pricewatcha/sdk/0.1.5",
       Accept: "application/json",
       ...(options.apiKey ? { Authorization: `Bearer ${options.apiKey}` } : {}),
       ...options.headers,

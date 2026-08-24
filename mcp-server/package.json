@@ -1,6 +1,6 @@
 {
   "name": "@pricewatcha/mcp-server",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "MCP server exposing Pricewatcha price intelligence tools to AI Agents",
   "license": "Apache-2.0",
   "type": "module",

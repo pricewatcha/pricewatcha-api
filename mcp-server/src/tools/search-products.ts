@@ -15,14 +15,14 @@ export function registerSearchProducts(server: McpServer): void {
     "search_products",
     {
       title: TOOL_TITLES.search_products,
-      description: `Searches the Pricewatcha product catalog by keyword. Supports minus-prefixed exclude terms: e.g. "iPhone 15 -cover -hülle -case" returns devices only. Returns product-level data only — not user accounts or alert settings. ${STRUCTURED_ERROR_HINT}`,
+      description: `Searches the Pricewatcha product catalog by keyword (token AND; word order does not matter). Supports minus-prefixed exclude terms: e.g. "iPhone 15 -cover -case" returns devices only. Returns product-level data only — not user accounts or alert settings. ${STRUCTURED_ERROR_HINT}`,
       inputSchema: {
         query: z
           .string()
           .min(1)
           .max(200)
           .describe(
-            'Search keywords. Supports minus-prefixed exclude terms: e.g. "iPhone 15 -cover -hülle"',
+            'Search keywords (token AND). Supports minus-prefixed exclude terms: e.g. "iPhone 15 -cover -case"',
           ),
       },
       outputSchema: searchProductsOutputSchema,

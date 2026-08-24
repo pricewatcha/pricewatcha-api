@@ -20,7 +20,7 @@ export function getApiBaseUrl(): string {
 export function getClient(options?: { apiKey?: string }): PricewatchaClient {
   const baseUrl = getApiBaseUrl();
   const headers: Record<string, string> = {
-    "User-Agent": "@pricewatcha/mcp-server/0.1.4",
+    "User-Agent": "@pricewatcha/mcp-server/0.1.5",
   };
   const secret = getMcpProxySecret();
   const clientId = getMcpRequestClientId();
