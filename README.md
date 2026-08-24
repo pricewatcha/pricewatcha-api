@@ -23,7 +23,7 @@ curl -s "https://pricewatcha.com/api/v1/products/demo_iphone_15_pro"
 curl -s "https://pricewatcha.com/api/v1/search?q=iphone+15&limit=10"
 ```
 
-Search matches product **name**, **URL** and **platform/shop** (case-insensitive). Results include the full Pricewatcha catalog, not only URLs submitted via `POST /track`. Use `product_id` from search for product and price-history endpoints (`prod_*` or `demo_*`).
+Search is **case-insensitive token AND** (all terms must appear; word order does not matter). Results include the full Pricewatcha catalog, not only URLs submitted via `POST /track`. Use `product_id` from search for product and price-history endpoints (`prod_*` or `demo_*`).
 
 #### Path 2: Track a product and get price history
 
@@ -418,7 +418,9 @@ Long-poll default is ~25 seconds. For slow shops, poll `GET /jobs/{jobId}` inste
 
 ## Search
 
-Keyword search is **case-insensitive** and matches product name, URL, platform/shop and related fields. Results cover the **full Pricewatcha catalog**, not only URLs submitted via `POST /track`.
+Keyword search is **case-insensitive**. The query is split into tokens; a product matches when **every** token appears in the normalized product name, URL, platform/shop or related fields. Word order does not matter, and punctuation such as hyphens and slashes is treated as whitespace (`Darth-Vader` matches `Darth Vader`). Results cover the **full Pricewatcha catalog**, not only URLs submitted via `POST /track`.
+
+Exact contiguous phrases still rank above other token matches when both match.
 
 ### Endpoint
 
@@ -426,11 +428,12 @@ Keyword search is **case-insensitive** and matches product name, URL, platform/s
 
 Optional `limit`: default **50**, maximum **200**. Applied after exclude-term filtering.
 
-`q` supports Google-style minus-prefixed exclude terms. `q=iPhone+15+-cover+-hülle` returns products matching "iPhone 15" that do **not** contain "cover" or "hülle" in name, shop or URL (case-insensitive). A lone `-` is ignored.
+`q` supports Google-style minus-prefixed exclude terms. `q=iPhone+15+-cover+-case` returns products matching both "iPhone" and "15" that do **not** contain "cover" or "case" in the searchable fields (case-insensitive). A lone `-` is ignored.
 
 ```bash
 curl -s "https://pricewatcha.com/api/v1/search?q=iphone&limit=10"
-curl -s "https://pricewatcha.com/api/v1/search?q=iPhone+15+-cover+-hülle+-case"
+curl -s "https://pricewatcha.com/api/v1/search?q=iPhone+15+-cover+-case"
+curl -s "https://pricewatcha.com/api/v1/search?q=Darth+Vader+DX27"
 ```
 
 ### Example response
@@ -1315,6 +1318,12 @@ Generate clients in other languages from the [OpenAPI spec](https://github.com/p
 All notable changes to the **public API contract**, SDKs and MCP server in this repository.
 
 Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
+
+### 0.1.5 - 2026-08-24
+
+#### Changed
+
+- **Search matching:** `GET /api/v1/search?q=` uses case-insensitive **token AND** (all terms must appear; order does not matter) instead of requiring the full query as one contiguous substring. Hyphens, slashes and similar punctuation are normalized to spaces (`Darth-Vader` ≡ `Darth Vader`, `1/6` ≡ `1 6`). Contiguous phrase matches still rank higher. Minus-prefixed exclude terms are unchanged.
 
 ### 0.1.4 - 2026-08-23
 
