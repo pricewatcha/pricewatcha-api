@@ -11,7 +11,7 @@ curl -s "{{API_BASE}}/products/demo_iphone_15_pro"
 curl -s "{{API_BASE}}/search?q=iphone+15&limit=10"
 ```
 
-Search matches product **name**, **URL** and **platform/shop** (case-insensitive). Results include the full Pricewatcha catalog, not only URLs submitted via `POST /track`. Use `product_id` from search for product and price-history endpoints (`prod_*` or `demo_*`).
+Search is **case-insensitive token AND** (all terms must appear; word order does not matter). Results include the full Pricewatcha catalog, not only URLs submitted via `POST /track`. Use `product_id` from search for product and price-history endpoints (`prod_*` or `demo_*`).
 
 ### Path 2: Track a product and get price history
 
