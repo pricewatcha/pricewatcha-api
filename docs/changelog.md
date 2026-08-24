@@ -8,7 +8,7 @@ Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 
 ### Changed
 
-- **Search matching:** `GET /api/v1/search?q=` uses case-insensitive **token AND** (all terms must appear; order does not matter) instead of requiring the full query as one contiguous substring. Hyphens, slashes and similar punctuation are normalized to spaces (`Obi-Wan` ≡ `Obi Wan`, `1/6` ≡ `1 6`). Contiguous phrase matches still rank higher. Minus-prefixed exclude terms are unchanged.
+- **Search matching:** `GET /api/v1/search?q=` uses case-insensitive **token AND** (all terms must appear; order does not matter) instead of requiring the full query as one contiguous substring. Hyphens, slashes and similar punctuation are normalized to spaces (`Darth-Vader` ≡ `Darth Vader`, `1/6` ≡ `1 6`). Contiguous phrase matches still rank higher. Minus-prefixed exclude terms are unchanged.
 
 ## 0.1.4 - 2026-08-23
 

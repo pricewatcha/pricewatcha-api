@@ -227,7 +227,7 @@ paths:
       description: |
         Case-insensitive token AND search over product name, URL, platform/shop, and related fields
         (all terms must appear; word order does not matter; hyphens/slashes are normalized).
-        Supports Google-style minus-prefixed exclude terms (e.g. `iPhone 15 -cover -hülle`):
+        Supports Google-style minus-prefixed exclude terms (e.g. `iPhone 15 -cover -case`):
         matching products that contain an exclude term are dropped.
         `limit` applies after exclusion. A lone `-` is ignored.
         Returns all catalog products with public product-level fields (dashboard, API, MCP, and demo).
@@ -243,9 +243,9 @@ paths:
           description: |
             Search query. Matching is case-insensitive token AND (word order does not matter;
             punctuation like hyphens and slashes is normalized). Supports minus-prefixed
-            exclude terms: e.g. "iPhone 15 -cover -hülle" returns products matching both
-            "iPhone" and "15" that do not contain "cover" or "hülle". A lone "-" is ignored.
-          example: iPhone 15 -cover -hülle
+            exclude terms: e.g. "iPhone 15 -cover -case" returns products matching both
+            "iPhone" and "15" that do not contain "cover" or "case". A lone "-" is ignored.
+          example: iPhone 15 -cover -case
         - name: limit
           in: query
           required: false

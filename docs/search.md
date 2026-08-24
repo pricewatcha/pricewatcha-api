@@ -1,6 +1,6 @@
 # Search {#search}
 
-Keyword search is **case-insensitive**. The query is split into tokens; a product matches when **every** token appears in the normalized product name, URL, platform/shop or related fields. Word order does not matter, and punctuation such as hyphens and slashes is treated as whitespace (`Obi-Wan` matches `Obi Wan`). Results cover the **full Pricewatcha catalog**, not only URLs submitted via `POST /track`.
+Keyword search is **case-insensitive**. The query is split into tokens; a product matches when **every** token appears in the normalized product name, URL, platform/shop or related fields. Word order does not matter, and punctuation such as hyphens and slashes is treated as whitespace (`Darth-Vader` matches `Darth Vader`). Results cover the **full Pricewatcha catalog**, not only URLs submitted via `POST /track`.
 
 Exact contiguous phrases still rank above other token matches when both match.
 
@@ -10,11 +10,11 @@ Exact contiguous phrases still rank above other token matches when both match.
 
 Optional `limit`: default **50**, maximum **200**. Applied after exclude-term filtering.
 
-`q` supports Google-style minus-prefixed exclude terms. `q=iPhone+15+-cover+-hülle` returns products matching both "iPhone" and "15" that do **not** contain "cover" or "hülle" in the searchable fields (case-insensitive). A lone `-` is ignored.
+`q` supports Google-style minus-prefixed exclude terms. `q=iPhone+15+-cover+-case` returns products matching both "iPhone" and "15" that do **not** contain "cover" or "case" in the searchable fields (case-insensitive). A lone `-` is ignored.
 
 ```bash
 curl -s "{{API_BASE}}/search?q=iphone&limit=10"
-curl -s "{{API_BASE}}/search?q=iPhone+15+-cover+-hülle+-case"
+curl -s "{{API_BASE}}/search?q=iPhone+15+-cover+-case"
 curl -s "{{API_BASE}}/search?q=Darth+Vader+DX27"
 ```
 
