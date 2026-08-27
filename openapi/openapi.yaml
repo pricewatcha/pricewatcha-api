@@ -92,6 +92,9 @@ paths:
 
         Keep this under typical proxy timeouts (~30s). The internal wait must not
         block a worker thread in a busy loop.
+
+        An API key on this request raises track quotas to the authenticated
+        per-account tier.
       requestBody:
         required: true
         content:
@@ -172,6 +175,7 @@ paths:
       tags: [intelligence]
       operationId: getProduct
       summary: Get product intelligence
+      description: Public product detail. Optional API key uses higher per-account product-read quotas.
       parameters:
         - name: productId
           in: path
@@ -204,6 +208,7 @@ paths:
       tags: [intelligence]
       operationId: getPriceHistory
       summary: Get price history and trend
+      description: Public price history. Optional API key uses higher per-account product-read quotas.
       parameters:
         - name: productId
           in: path
@@ -244,6 +249,7 @@ paths:
         `limit` applies after exclusion. A lone `-` is ignored.
         Returns all catalog products with public product-level fields (dashboard, API, MCP, and demo).
         Does not expose user accounts, emails, watchlists, or alert settings.
+        Optional API key uses higher per-account search quotas.
       parameters:
         - name: q
           in: query

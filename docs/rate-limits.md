@@ -11,17 +11,17 @@ The following limits apply and may change without notice.
 | Track (hourly) | `POST /track` | ~40 jobs / hour | ~120 jobs / hour |
 | Track (daily) | `POST /track` | ~80 jobs / day | ~400 jobs / day |
 | Job poll | `GET /jobs/{id}` | ~40 req/min per client | same |
-| Search (burst) | `GET /search` | ~20 req / 60s | same |
-| Search (hourly) | `GET /search` | ~60 req / hour | same |
-| Search (daily) | `GET /search` | ~200 req / day | same |
-| Read (burst) | `/products`, `/price-history` | ~60–120 req/min per client | same |
-| Read (hourly) | `/products`, `/price-history` | ~180 req / hour | same |
-| Read (daily) | `/products`, `/price-history` | ~600 req / day | same |
+| Search (burst) | `GET /search` | ~20 req / 60s | ~40 req / 60s |
+| Search (hourly) | `GET /search` | ~60 req / hour | ~180 req / hour |
+| Search (daily) | `GET /search` | ~200 req / day | ~1000 req / day |
+| Read (burst) | `/products`, `/price-history` | ~60–120 req/min per client | ~240 req / 60s |
+| Read (hourly) | `/products`, `/price-history` | ~180 req / hour | ~540 req / hour |
+| Read (daily) | `/products`, `/price-history` | ~600 req / day | ~3000 req / day |
 | Health | `/health` and `/` | Unlimited | Unlimited |
 
-Send `Authorization: Bearer pwk_live_…` on `POST /track` to use the authenticated tier. Track remains available without a key at the anonymous limits.
+Send `Authorization: Bearer pwk_live_…` on `POST /track`, `GET /search`, or product reads to use the authenticated tier. Those endpoints remain available without a key at the anonymous limits.
 
-> **Client identity:** anonymous limits are keyed by client IP. Behind Cloudflare the API prefers `CF-Connecting-IP` over `X-Forwarded-For` so edge proxy IPs are not treated as distinct clients. The hosted MCP server forwards a stable `X-Pricewatcha-Client-Id` (OAuth token hash, else connecting-IP hash) with a shared proxy secret so MCP callers are not all bucketed under one egress IP. Authenticated track quotas are keyed by account (`owner_id`), not IP.
+> **Client identity:** anonymous limits are keyed by client IP. Behind Cloudflare the API prefers `CF-Connecting-IP` over `X-Forwarded-For` so edge proxy IPs are not treated as distinct clients. The hosted MCP server forwards a stable `X-Pricewatcha-Client-Id` (OAuth token hash, else connecting-IP hash) with a shared proxy secret so MCP callers are not all bucketed under one egress IP. Authenticated track, search and product-read quotas are keyed by account (`owner_id`), not IP.
 
 > Monitor `X-RateLimit-Remaining` and honor `429` with exponential backoff. `X-RateLimit-Policy` names which window the headers refer to (`track`, `track_hourly`, `track_daily`, `track_concurrent`, `job_read`, `search`, `search_hourly`, `search_daily`, `read`, `read_hourly`, or `read_daily`).
 
@@ -29,9 +29,9 @@ Send `Authorization: Bearer pwk_live_…` on `POST /track` to use the authentica
 
 Agents should prefer: start track → poll `GET /jobs/{id}` with backoff (not every 1–2s) → read product/history once complete. Retrying `POST /track` with the same URL while that job is still `queued`/`processing` reuses the existing job and does not consume another concurrent slot. Jobs left `queued`/`processing` longer than the scrape timeout (default 600s) are failed so slots cannot leak across deploys.
 
-Search and product-read quotas are in-memory per app instance (not shared across Railway replicas the way track jobs are). Polling the same catalog queries on a short interval will still trip the hourly/daily search windows.
+Search and product-read quotas are in-memory per app instance (not shared across Railway replicas the way track jobs are). Authenticated callers still get the higher per-account windows. Polling the same catalog queries on a short interval will still trip the hourly/daily search windows.
 
-Exact numbers may change without notice (env overrides: `API_V1_TRACK_*`, `API_V1_TRACK_AUTH_*`, `API_V1_JOB_READ_*`, `API_V1_READ_*`, `API_V1_SEARCH_*`).
+Exact numbers may change without notice (env overrides: `API_V1_TRACK_*`, `API_V1_TRACK_AUTH_*`, `API_V1_JOB_READ_*`, `API_V1_READ_*`, `API_V1_READ_AUTH_*`, `API_V1_SEARCH_*`, `API_V1_SEARCH_AUTH_*`).
 
 ## Headers
 
@@ -60,7 +60,7 @@ When limited, the API returns `429 Too Many Requests` with a JSON body:
 }
 ```
 
-**Agent guidance:** honor `429`, wait until `retry_after_seconds` / `X-RateLimit-Reset`, and reduce poll frequency on job status endpoints. Prefer spreading tracks over time rather than bursting near the hourly/daily caps. Anonymous `429` responses mention that an API key raises track quotas.
+**Agent guidance:** honor `429`, wait until `retry_after_seconds` / `X-RateLimit-Reset`, and reduce poll frequency on job status endpoints. Prefer spreading tracks over time rather than bursting near the hourly/daily caps. Anonymous `429` responses mention that an API key raises quotas.
 
 Operators can receive an email when hourly/daily/concurrent track limits or hourly/daily search and product-read limits trip (cooldown per client; see `API_V1_RATE_LIMIT_ALERT_*`).
 

@@ -35,7 +35,7 @@ curl -s -X POST "https://pricewatcha.com/api/v1/track" \
 curl -s "https://pricewatcha.com/api/v1/products/{productId}/price-history"
 ```
 
-`POST /track` returns HTTP 200 with a bounded server-side long-poll (~25s). Use `product_id` from the response for price history. Optional: send `Authorization: Bearer pwk_live_…` for [higher track quotas](#rate-limits).
+`POST /track` returns HTTP 200 with a bounded server-side long-poll (~25s). Use `product_id` from the response for price history. Optional: send `Authorization: Bearer pwk_live_…` for [higher track, search and product-read quotas](#rate-limits).
 
 Fast shops return `status: "completed"` with the full `product` in one call. Slow shops return `status: "running"` with a `job_id`. Poll `GET https://pricewatcha.com/api/v1/jobs/{jobId}` until the job is `completed` or `failed`. More detail: [Async track & poll](#async-workflow).
 
@@ -62,7 +62,7 @@ For authentication and data boundaries, see [Authentication](#authentication) an
 
 ## Authentication
 
-No credential required for catalog [search](search.md), product detail, price history and [async track/poll](async-workflows.md). Track without a key uses [anonymous rate limits](rate-limits.md). Send an API key on `POST /track` to use the higher per-account track quotas.
+No credential required for catalog [search](search.md), product detail, price history and [async track/poll](async-workflows.md). Without a key those endpoints use [anonymous rate limits](rate-limits.md). Send an API key to use the higher per-account track, search and product-read quotas.
 
 Protected API v1 endpoints (alerts, webhooks, authenticated track callbacks) use:
 
@@ -211,17 +211,17 @@ The following limits apply and may change without notice.
 | Track (hourly) | `POST /track` | ~40 jobs / hour | ~120 jobs / hour |
 | Track (daily) | `POST /track` | ~80 jobs / day | ~400 jobs / day |
 | Job poll | `GET /jobs/{id}` | ~40 req/min per client | same |
-| Search (burst) | `GET /search` | ~20 req / 60s | same |
-| Search (hourly) | `GET /search` | ~60 req / hour | same |
-| Search (daily) | `GET /search` | ~200 req / day | same |
-| Read (burst) | `/products`, `/price-history` | ~60–120 req/min per client | same |
-| Read (hourly) | `/products`, `/price-history` | ~180 req / hour | same |
-| Read (daily) | `/products`, `/price-history` | ~600 req / day | same |
+| Search (burst) | `GET /search` | ~20 req / 60s | ~40 req / 60s |
+| Search (hourly) | `GET /search` | ~60 req / hour | ~180 req / hour |
+| Search (daily) | `GET /search` | ~200 req / day | ~1000 req / day |
+| Read (burst) | `/products`, `/price-history` | ~60–120 req/min per client | ~240 req / 60s |
+| Read (hourly) | `/products`, `/price-history` | ~180 req / hour | ~540 req / hour |
+| Read (daily) | `/products`, `/price-history` | ~600 req / day | ~3000 req / day |
 | Health | `/health` and `/` | Unlimited | Unlimited |
 
-Send `Authorization: Bearer pwk_live_…` on `POST /track` to use the authenticated tier. Track remains available without a key at the anonymous limits.
+Send `Authorization: Bearer pwk_live_…` on `POST /track`, `GET /search`, or product reads to use the authenticated tier. Those endpoints remain available without a key at the anonymous limits.
 
-> **Client identity:** anonymous limits are keyed by client IP. Behind Cloudflare the API prefers `CF-Connecting-IP` over `X-Forwarded-For` so edge proxy IPs are not treated as distinct clients. The hosted MCP server forwards a stable `X-Pricewatcha-Client-Id` (OAuth token hash, else connecting-IP hash) with a shared proxy secret so MCP callers are not all bucketed under one egress IP. Authenticated track quotas are keyed by account (`owner_id`), not IP.
+> **Client identity:** anonymous limits are keyed by client IP. Behind Cloudflare the API prefers `CF-Connecting-IP` over `X-Forwarded-For` so edge proxy IPs are not treated as distinct clients. The hosted MCP server forwards a stable `X-Pricewatcha-Client-Id` (OAuth token hash, else connecting-IP hash) with a shared proxy secret so MCP callers are not all bucketed under one egress IP. Authenticated track, search and product-read quotas are keyed by account (`owner_id`), not IP.
 
 > Monitor `X-RateLimit-Remaining` and honor `429` with exponential backoff. `X-RateLimit-Policy` names which window the headers refer to (`track`, `track_hourly`, `track_daily`, `track_concurrent`, `job_read`, `search`, `search_hourly`, `search_daily`, `read`, `read_hourly`, or `read_daily`).
 
@@ -229,9 +229,9 @@ Send `Authorization: Bearer pwk_live_…` on `POST /track` to use the authentica
 
 Agents should prefer: start track → poll `GET /jobs/{id}` with backoff (not every 1–2s) → read product/history once complete. Retrying `POST /track` with the same URL while that job is still `queued`/`processing` reuses the existing job and does not consume another concurrent slot. Jobs left `queued`/`processing` longer than the scrape timeout (default 600s) are failed so slots cannot leak across deploys.
 
-Search and product-read quotas are in-memory per app instance (not shared across Railway replicas the way track jobs are). Polling the same catalog queries on a short interval will still trip the hourly/daily search windows.
+Search and product-read quotas are in-memory per app instance (not shared across Railway replicas the way track jobs are). Authenticated callers still get the higher per-account windows. Polling the same catalog queries on a short interval will still trip the hourly/daily search windows.
 
-Exact numbers may change without notice (env overrides: `API_V1_TRACK_*`, `API_V1_TRACK_AUTH_*`, `API_V1_JOB_READ_*`, `API_V1_READ_*`, `API_V1_SEARCH_*`).
+Exact numbers may change without notice (env overrides: `API_V1_TRACK_*`, `API_V1_TRACK_AUTH_*`, `API_V1_JOB_READ_*`, `API_V1_READ_*`, `API_V1_READ_AUTH_*`, `API_V1_SEARCH_*`, `API_V1_SEARCH_AUTH_*`).
 
 ### Headers
 
@@ -260,7 +260,7 @@ When limited, the API returns `429 Too Many Requests` with a JSON body:
 }
 ```
 
-**Agent guidance:** honor `429`, wait until `retry_after_seconds` / `X-RateLimit-Reset`, and reduce poll frequency on job status endpoints. Prefer spreading tracks over time rather than bursting near the hourly/daily caps. Anonymous `429` responses mention that an API key raises track quotas.
+**Agent guidance:** honor `429`, wait until `retry_after_seconds` / `X-RateLimit-Reset`, and reduce poll frequency on job status endpoints. Prefer spreading tracks over time rather than bursting near the hourly/daily caps. Anonymous `429` responses mention that an API key raises quotas.
 
 Operators can receive an email when hourly/daily/concurrent track limits or hourly/daily search and product-read limits trip (cooldown per client; see `API_V1_RATE_LIMIT_ALERT_*`).
 
@@ -389,7 +389,7 @@ A **404** is a lookup problem. A **200** with `failed` is a completed job whose 
 
 ### Track job webhooks (push)
 
-Authenticated clients can receive a push when a track job finishes: use `callback_url` (one-off) or `webhook_id` (existing subscription). Mutually exclusive. Same rate limits as anonymous `POST /track`.
+Authenticated clients can receive a push when a track job finishes: use `callback_url` (one-off) or `webhook_id` (existing subscription). Mutually exclusive. Callbacks do not consume extra quota beyond the authenticated track job.
 
 ```bash
 curl -s -X POST "https://pricewatcha.com/api/v1/track" \
@@ -435,7 +435,7 @@ Exact contiguous phrases still rank above other token matches when both match.
 
 Optional `limit`: default **50**, maximum **200**. Applied after exclude-term filtering.
 
-Search is rate-limited separately from product reads (~20 requests / 60s, ~60 / hour, ~200 / day per client). Honor HTTP `429` and `X-RateLimit-Policy`; see [Rate limits](rate-limits.md).
+Search is rate-limited separately from product reads. Anonymous callers get ~20 requests / 60s, ~60 / hour, ~200 / day; an API key raises that to ~40 / 60s, ~180 / hour, ~1000 / day per account. Honor HTTP `429` and `X-RateLimit-Policy`; see [Rate limits](rate-limits.md).
 
 `q` supports Google-style minus-prefixed exclude terms. `q=iPhone+15+-cover+-case` returns products matching both "iPhone" and "15" that do **not** contain "cover" or "case" in the searchable fields (case-insensitive). A lone `-` is ignored.
 
@@ -564,7 +564,7 @@ Non-success responses use a structured `error` object. Inspect **`error.code`**:
 | `scrape_target_not_found` | 404 | Product page not found on the shop |
 | `scrape_chain_exhausted` | 502 | All scraper strategies failed |
 | `scrape_timeout` | 200 (job failed) | Track job exceeded the scrape timeout, or a queued/processing job was reaped after a worker loss |
-| `rate_limited` | 429 | Track/search/read quota exceeded: honor `retry_after_seconds`. Anonymous track is per client IP; API keys use higher per-account track quotas. Search and product-read quotas are the same with or without a key. |
+| `rate_limited` | 429 | Track/search/read quota exceeded: honor `retry_after_seconds`. Anonymous traffic is per client IP; API keys use higher per-account track, search and product-read quotas. |
 | `access_restricted` | 403 | The client IP is blocked after an abuse notice. Email [info@pricewatcha.com](mailto:info@pricewatcha.com). Do not retry until access is restored. During the earlier grace period the API still works and sends `X-Pricewatcha-Restriction: notice`. |
 | `internal_error` | 500 | Unexpected server error |
 
@@ -1332,8 +1332,8 @@ Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 
 #### Changed
 
-- **Search rate limits:** `GET /api/v1/search` now has its own stacked quotas (~20 / 60s, ~60 / hour, ~200 / day per client), separate from generic catalog reads. Polling the same queries on a short interval returns HTTP `429` with `X-RateLimit-Policy` `search`, `search_hourly`, or `search_daily`.
-- **Product read rate limits:** `GET /products/{id}` and `/price-history` keep the per-minute burst and add hourly/daily caps (~180 / hour, ~600 / day).
+- **Search rate limits:** `GET /api/v1/search` now has its own stacked quotas, separate from generic catalog reads: anonymous ~20 / 60s, ~60 / hour, ~200 / day; authenticated (API key) ~40 / 60s, ~180 / hour, ~1000 / day, keyed per account. Polling the same queries on a short interval returns HTTP `429` with `X-RateLimit-Policy` `search`, `search_hourly`, or `search_daily`.
+- **Product read rate limits:** `GET /products/{id}` and `/price-history` keep the per-minute burst and add hourly/daily caps: anonymous ~120 / 60s, ~180 / hour, ~600 / day; authenticated ~240 / 60s, ~540 / hour, ~3000 / day.
 - **Abuse notices:** exhausting the anonymous **daily** search or product-read quota (`search_daily` / `read_daily`) counts toward the same IP strike threshold as `track_daily`. After several distinct UTC days the client is asked to contact `info@pricewatcha.com` (`X-Pricewatcha-Restriction: notice`); if there is no reply the IP is blocked. Default restriction scope is all of `/api/v1` except health/discovery.
 
 ### 0.1.5 - 2026-08-24

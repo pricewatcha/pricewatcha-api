@@ -116,7 +116,7 @@ A **404** is a lookup problem. A **200** with `failed` is a completed job whose 
 
 <span class="developers-label developers-label--auth">Requires auth</span>
 
-Authenticated clients can receive a push when a track job finishes: use `callback_url` (one-off) or `webhook_id` (existing subscription). Mutually exclusive. Same rate limits as anonymous `POST /track`.
+Authenticated clients can receive a push when a track job finishes: use `callback_url` (one-off) or `webhook_id` (existing subscription). Mutually exclusive. Callbacks do not consume extra quota beyond the authenticated track job.
 
 ```bash
 curl -s -X POST "{{API_BASE}}/track" \

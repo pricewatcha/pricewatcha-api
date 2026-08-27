@@ -23,7 +23,7 @@ curl -s -X POST "{{API_BASE}}/track" \
 curl -s "{{API_BASE}}/products/{productId}/price-history"
 ```
 
-`POST /track` returns HTTP 200 with a bounded server-side long-poll (~25s). Use `product_id` from the response for price history. Optional: send `Authorization: Bearer pwk_live_…` for [higher track quotas](#rate-limits).
+`POST /track` returns HTTP 200 with a bounded server-side long-poll (~25s). Use `product_id` from the response for price history. Optional: send `Authorization: Bearer pwk_live_…` for [higher track, search and product-read quotas](#rate-limits).
 
 Fast shops return `status: "completed"` with the full `product` in one call. Slow shops return `status: "running"` with a `job_id`. Poll `GET {{API_BASE}}/jobs/{jobId}` until the job is `completed` or `failed`. More detail: [Async track & poll](#async-workflow).
 
