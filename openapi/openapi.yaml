@@ -192,6 +192,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/products/{productId}/price-history:
     get:
@@ -214,6 +220,12 @@ paths:
                 $ref: "#/components/schemas/PriceHistoryResponse"
         "404":
           description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
           content:
             application/json:
               schema:
@@ -264,6 +276,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SearchResultItem"
+        "429":
+          description: Search rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/openapi.json:
     get:

@@ -4,6 +4,14 @@ All notable changes to the **public API contract**, SDKs and MCP server in this 
 
 Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 
+## 0.1.6 - 2026-08-26
+
+### Changed
+
+- **Search rate limits:** `GET /api/v1/search` now has its own stacked quotas (~20 / 60s, ~60 / hour, ~200 / day per client), separate from generic catalog reads. Polling the same queries on a short interval returns HTTP `429` with `X-RateLimit-Policy` `search`, `search_hourly`, or `search_daily`.
+- **Product read rate limits:** `GET /products/{id}` and `/price-history` keep the per-minute burst and add hourly/daily caps (~180 / hour, ~600 / day).
+- **Abuse notices:** exhausting the anonymous **daily** search or product-read quota (`search_daily` / `read_daily`) counts toward the same IP strike threshold as `track_daily`. After several distinct UTC days the client is asked to contact `info@pricewatcha.com` (`X-Pricewatcha-Restriction: notice`); if there is no reply the IP is blocked. Default restriction scope is all of `/api/v1` except health/discovery.
+
 ## 0.1.5 - 2026-08-24
 
 ### Changed

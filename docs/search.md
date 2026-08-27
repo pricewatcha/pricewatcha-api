@@ -10,6 +10,8 @@ Exact contiguous phrases still rank above other token matches when both match.
 
 Optional `limit`: default **50**, maximum **200**. Applied after exclude-term filtering.
 
+Search is rate-limited separately from product reads (~20 requests / 60s, ~60 / hour, ~200 / day per client). Honor HTTP `429` and `X-RateLimit-Policy`; see [Rate limits](rate-limits.md).
+
 `q` supports Google-style minus-prefixed exclude terms. `q=iPhone+15+-cover+-case` returns products matching both "iPhone" and "15" that do **not** contain "cover" or "case" in the searchable fields (case-insensitive). A lone `-` is ignored.
 
 ```bash

@@ -35,7 +35,7 @@ Non-success responses use a structured `error` object. Inspect **`error.code`**:
 | `scrape_target_not_found` | 404 | Product page not found on the shop |
 | `scrape_chain_exhausted` | 502 | All scraper strategies failed |
 | `scrape_timeout` | 200 (job failed) | Track job exceeded the scrape timeout, or a queued/processing job was reaped after a worker loss |
-| `rate_limited` | 429 | Track/read quota exceeded: honor `retry_after_seconds`. Anonymous track is per client IP; API keys use higher per-account track quotas. |
+| `rate_limited` | 429 | Track/search/read quota exceeded: honor `retry_after_seconds`. Anonymous track is per client IP; API keys use higher per-account track quotas. Search and product-read quotas are the same with or without a key. |
 | `access_restricted` | 403 | The client IP is blocked after an abuse notice. Email [info@pricewatcha.com](mailto:info@pricewatcha.com). Do not retry until access is restored. During the earlier grace period the API still works and sends `X-Pricewatcha-Restriction: notice`. |
 | `internal_error` | 500 | Unexpected server error |
 
