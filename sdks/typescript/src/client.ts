@@ -11,6 +11,8 @@ import type {
   Product,
   SearchResult,
   WaitForJobOptions,
+  WatchListResponse,
+  WatchStatus,
   Alert,
   AlertCreateRequest,
   AlertListOptions,
@@ -111,10 +113,16 @@ export class PricewatchaClient {
   }
 
   /** POST /track — bounded server-side long-poll (default ~25s) */
-  track(url: string): Promise<JobResponse> {
+  track(
+    url: string,
+    options: { watch?: boolean; refresh?: boolean } = {},
+  ): Promise<JobResponse> {
+    const body: Record<string, unknown> = { url };
+    if (options.watch) body.watch = true;
+    if (options.refresh) body.refresh = true;
     return this.request<JobResponse>("POST", "/track", {
       expectedStatus: 200,
-      body: JSON.stringify({ url }),
+      body: JSON.stringify(body),
     });
   }
 
@@ -153,12 +161,16 @@ export class PricewatchaClient {
    * Track a URL, then poll getJob until terminal state or timeout.
    * Client-side loop over track + getJob — no special server endpoint.
    */
-  async trackAndWait(url: string, options: WaitForJobOptions = {}): Promise<JobResponse> {
-    const job = await this.track(url);
+  async trackAndWait(
+    url: string,
+    options: WaitForJobOptions & { watch?: boolean; refresh?: boolean } = {},
+  ): Promise<JobResponse> {
+    const { watch, refresh, ...waitOptions } = options;
+    const job = await this.track(url, { watch, refresh });
     if (isTerminalJobStatus(job.status)) {
       return job;
     }
-    return this.waitForJob(job.job_id, options);
+    return this.waitForJob(job.job_id, waitOptions);
   }
 
   /** GET /products/:productId */
@@ -172,6 +184,41 @@ export class PricewatchaClient {
       "GET",
       `/products/${encodeURIComponent(productId)}/price-history`,
     );
+  }
+
+  /** POST /products/:productId/watch — API key required. */
+  watchProduct(productId: string): Promise<WatchStatus> {
+    return this.request<WatchStatus>(
+      "POST",
+      `/products/${encodeURIComponent(productId)}/watch`,
+      { expectedStatus: 200 },
+    );
+  }
+
+  /** DELETE /products/:productId/watch — API key required. */
+  unwatchProduct(productId: string): Promise<WatchStatus> {
+    return this.request<WatchStatus>(
+      "DELETE",
+      `/products/${encodeURIComponent(productId)}/watch`,
+      { expectedStatus: 200 },
+    );
+  }
+
+  /** GET /products/:productId/watch — API key required. */
+  getWatchStatus(productId: string): Promise<WatchStatus> {
+    return this.request<WatchStatus>(
+      "GET",
+      `/products/${encodeURIComponent(productId)}/watch`,
+    );
+  }
+
+  /** GET /watchlist — API key required. */
+  listWatchlist(options?: { limit?: number; offset?: number }): Promise<WatchListResponse> {
+    const params = new URLSearchParams();
+    if (options?.limit !== undefined) params.set("limit", String(options.limit));
+    if (options?.offset !== undefined) params.set("offset", String(options.offset));
+    const query = params.toString();
+    return this.request<WatchListResponse>("GET", query ? `/watchlist?${query}` : "/watchlist");
   }
 
   /** POST /alerts — API key required. At least one setting (threshold or notify_on_drop/rise). */

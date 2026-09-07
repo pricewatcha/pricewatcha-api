@@ -24,5 +24,8 @@ export type {
   Product,
   SearchResult,
   WaitForJobOptions,
+  WatchListItem,
+  WatchListResponse,
+  WatchStatus,
 } from "./types.js";
 export { isActiveJobStatus, isTerminalJobStatus } from "./job-status.js";

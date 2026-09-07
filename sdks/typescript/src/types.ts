@@ -96,6 +96,23 @@ export interface WaitForJobOptions {
   intervalMs?: number;
 }
 
+export interface WatchStatus {
+  product_id: string;
+  watching: boolean;
+  watched_at: string | null;
+}
+
+export interface WatchListItem {
+  product_id: string;
+  watched_at: string;
+  product: Product;
+}
+
+export interface WatchListResponse {
+  items: WatchListItem[];
+  total: number;
+}
+
 export interface PricewatchaClientOptions {
   baseUrl?: string;
   apiKey?: string;

@@ -13,6 +13,8 @@ Each tracked product has **one alert record per user**. Combine any of:
 
 At least one of those four settings is required.
 
+Creating an alert also **watches** the product for your account so the price scheduler keeps it updated (see [Watchlist](watchlist.md)).
+
 All endpoints require an API key in `Authorization: Bearer …`. Full schemas: `GET {{API_BASE}}/openapi.json` (tag `alerts`).
 
 ## Endpoints

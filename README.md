@@ -192,6 +192,7 @@ Store `key` securely. Use it on alerts, webhooks and other protected API v1 endp
 | `POST` | `/api/keys` | Session token | Create API key |
 | `GET` / `DELETE` | `/api/keys` … | Session token or key | List / revoke keys |
 | `*` | `/api/v1/alerts` … | API key | Price alerts |
+| `*` | `/api/v1/watchlist` / `…/watch` | API key | Continuous price watchlist |
 | `*` | `/api/v1/webhooks` … | API key | Webhook subscriptions |
 
 Machine-readable contract: [openapi/openapi.yaml](openapi/openapi.yaml) · Live: `GET https://pricewatcha.com/api/v1/openapi.json`
@@ -282,6 +283,7 @@ Email **[info@pricewatcha.com](mailto:info@pricewatcha.com)** to discuss terms o
 - Fast shops: `status: "completed"` with full `product` in the same response
 - Slow shops: `status: "running"` + `job_id`: poll `GET /api/v1/jobs/{jobId}` until `completed` or `failed`
 - Repeat `POST /track` for the same URL while a job is in flight returns that job instead of starting another (and instead of a concurrent 429)
+- With an API key: `watch: true` enrolls the product for [continuous scheduler updates](watchlist.md); `refresh: true` forces a re-scrape even if the URL is already in the catalog
 
 Jobs are retained for **72 hours**. After expiry, `GET /jobs/{jobId}` returns **404**: use `GET /products/{productId}` instead.
 
@@ -495,7 +497,9 @@ See the [demo catalog](https://github.com/pricewatcha/pricewatcha-api/tree/main/
 
 ## Data boundaries
 
-Catalog **price intelligence** (current price, history, product metadata) is available without authentication. **User-specific data** (accounts, emails, alert settings, private watchlists) is never exposed through the public API.
+Catalog **price intelligence** (current price, history, product metadata) is available without authentication. **User-specific data** (accounts, emails, alert settings) is never exposed on public read endpoints.
+
+Authenticated clients can **manage their own watchlist** via `/api/v1/watchlist` and `/api/v1/products/{id}/watch` (API key required). Other users' watchlists are never returned.
 
 ### Readable fields
 
@@ -507,6 +511,10 @@ Catalog **price intelligence** (current price, history, product metadata) is ava
 - Demo entries may include `"preview": true`
 
 Search, product detail and price history return the same fields whether the product was added via dashboard, API, MCP or demo data.
+
+### Continuous updates
+
+Only products on an account watchlist (dashboard or API watch / alert / product-scoped price webhook) are refreshed by the price scheduler. One-shot `POST /track` without `watch` does not enroll the product for ongoing updates.
 
 ### Product IDs
 
@@ -613,6 +621,8 @@ Each tracked product has **one alert record per user**. Combine any of:
 
 At least one of those four settings is required.
 
+Creating an alert also **watches** the product for your account so the price scheduler keeps it updated (see [Watchlist](watchlist.md)).
+
 All endpoints require an API key in `Authorization: Bearer …`. Full schemas: `GET https://pricewatcha.com/api/v1/openapi.json` (tag `alerts`).
 
 ### Endpoints
@@ -710,6 +720,71 @@ curl -s -X DELETE "https://pricewatcha.com/api/v1/alerts/76" \
 
 ---
 
+## Watchlist API
+
+Opt into **continuous price updates** for products you care about. Watched products use the same scheduler path as the dashboard watchlist (`user_products`).
+
+Anonymous `POST /track` remains a one-shot catalog ingestion. Without a watch (or an alert / product-scoped price webhook), prices are not refreshed on a schedule.
+
+### Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/watchlist` | List products you watch (`limit`, `offset`) |
+| `GET` | `/api/v1/products/{productId}/watch` | Watch status for one product |
+| `POST` | `/api/v1/products/{productId}/watch` | Start watching (idempotent) |
+| `DELETE` | `/api/v1/products/{productId}/watch` | Stop watching |
+
+All endpoints require an API key in `Authorization: Bearer …`. Cap: **200** watched products per account (`403 watch_limit_reached`).
+
+### Watch a product
+
+```bash
+curl -s -X POST "https://pricewatcha.com/api/v1/products/prod_a1b2c3d4e5/watch" \
+  -H "Authorization: Bearer pwk_live_YOUR_KEY_HERE"
+```
+
+Example response (`200`):
+
+```json
+{
+  "product_id": "prod_a1b2c3d4e5",
+  "watching": true,
+  "watched_at": "2026-09-07T18:00:00Z"
+}
+```
+
+### Track + watch in one call
+
+Authenticated `POST /track` accepts:
+
+- `watch: true` — add the product to your watchlist when the job links a product
+- `refresh: true` — force a re-scrape even if the URL is already in the catalog
+
+```bash
+curl -s -X POST "https://pricewatcha.com/api/v1/track" \
+  -H "Authorization: Bearer pwk_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://www.backmarket.de/de-de/p/example",
+    "watch": true,
+    "refresh": true
+  }'
+```
+
+### Automatic watch
+
+These actions also watch the product for your account:
+
+- Creating a **price alert** (`POST /alerts`)
+- Creating/updating a **product-scoped webhook** that includes price events (`price_dropped`, `price_changed`, …)
+
+### Unwatch
+
+`DELETE /products/{productId}/watch` fails with `409 alert_requires_watch` while an **active** alert still exists for that product. Delete or deactivate the alert first.
+
+---
+
 ## Webhooks
 
 Webhooks push **signed HTTP POST** requests when prices change, alert thresholds are crossed or authenticated track jobs complete.
@@ -719,7 +794,7 @@ Subscribe to event types **globally** or for a single `product_id`. Each event t
 | Scope | Behaviour |
 |-------|-----------|
 | **Global** (`product_id` omitted) | Price events for products **you** track (watchlist) or for which you have an **active price alert**. Not the full catalog. |
-| **Scoped** (`product_id` set) | Price events for that product only. |
+| **Scoped** (`product_id` set) | Price events for that product only. Creating/updating a product-scoped subscription with price events also [watches](watchlist.md) the product for scheduler updates. |
 | **Test** (`POST /webhooks/{id}/test`) | Sends a `webhook_test` payload to verify your endpoint; no product scope. |
 
 Catalog-wide price streaming is not supported. Use the test endpoint to verify delivery, then track products or create alerts for the events you care about.
@@ -883,7 +958,7 @@ curl -s -X POST "https://pricewatcha.com/api/v1/webhooks/42/test" \
 
 ## AI Agents & MCP
 
-Pricewatcha exposes a **remote MCP endpoint**: no local installation required. Connect your AI client with the URL below. Available tools include catalog reads (`get_api_status`, `search_products`, `track_product`, `get_job_status`, `get_product`, `get_price_history`) and price alerts (`create_price_alert`, `list_price_alerts`, `get_price_alert`, `update_price_alert`, `delete_price_alert`). Alert tools require a Pricewatcha API key and can notify on any drop or rise without a numeric threshold.
+Pricewatcha exposes a **remote MCP endpoint**: no local installation required. Connect your AI client with the URL below. Available tools include catalog reads (`get_api_status`, `search_products`, `track_product`, `get_job_status`, `get_product`, `get_price_history`), continuous watching (`watch_product`, `unwatch_product`, `list_watchlist`, `get_watch_status`), and price alerts (`create_price_alert`, `list_price_alerts`, `get_price_alert`, `update_price_alert`, `delete_price_alert`). Alert and watchlist tools require a Pricewatcha API key. Alerts can notify on any drop or rise without a numeric threshold; creating an alert also watches the product for scheduler updates.
 
 ```
 https://mcp.pricewatcha.com
@@ -1327,6 +1402,15 @@ Generate clients in other languages from the [OpenAPI spec](https://github.com/p
 All notable changes to the **public API contract**, SDKs and MCP server in this repository.
 
 Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
+
+### 0.1.7 - 2026-09-07
+
+#### Added
+
+- **Watchlist API:** `GET /api/v1/watchlist`, `GET|POST|DELETE /api/v1/products/{productId}/watch` (API key). Watched products are included in the price scheduler (same `user_products` path as the dashboard).
+- **`POST /track` options (auth required):** `watch: true` enrolls the product for continuous updates; `refresh: true` forces a re-scrape even when the URL is already in the catalog.
+- **Auto-watch:** creating a price alert, or a product-scoped webhook with price events, watches the product for that account.
+- **MCP / SDK:** `watch_product`, `unwatch_product`, `list_watchlist`, `get_watch_status`; `track` accepts `watch` / `refresh`.
 
 ### 0.1.6 - 2026-08-26
 

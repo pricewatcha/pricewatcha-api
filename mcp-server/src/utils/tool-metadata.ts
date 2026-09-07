@@ -14,6 +14,10 @@ export const TOOL_TITLES = {
   get_price_alert: "Get price alert",
   update_price_alert: "Update price alert",
   delete_price_alert: "Delete price alert",
+  watch_product: "Watch product",
+  unwatch_product: "Unwatch product",
+  list_watchlist: "List watchlist",
+  get_watch_status: "Get watch status",
 } as const;
 
 export const READ_ONLY_TOOL_ANNOTATIONS: ToolAnnotations = {
@@ -45,6 +49,20 @@ export const UPDATE_ALERT_ANNOTATIONS: ToolAnnotations = {
 };
 
 export const DELETE_ALERT_ANNOTATIONS: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  openWorldHint: false,
+  idempotentHint: true,
+};
+
+export const WATCH_ANNOTATIONS: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  openWorldHint: false,
+  idempotentHint: true,
+};
+
+export const UNWATCH_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
   destructiveHint: true,
   openWorldHint: false,
@@ -190,5 +208,28 @@ export const searchProductsOutputSchema = z
         })
         .passthrough(),
     ),
+  })
+  .passthrough();
+
+export const watchStatusOutputSchema = z
+  .object({
+    product_id: z.string(),
+    watching: z.boolean(),
+    watched_at: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+export const watchListOutputSchema = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          product_id: z.string(),
+          watched_at: z.string(),
+          product: getProductOutputSchema,
+        })
+        .passthrough(),
+    ),
+    total: z.number().int(),
   })
   .passthrough();

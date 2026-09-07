@@ -14,6 +14,7 @@
 | `POST` | `/api/keys` | Session token | Create API key |
 | `GET` / `DELETE` | `/api/keys` … | Session token or key | List / revoke keys |
 | `*` | `/api/v1/alerts` … | API key | Price alerts |
+| `*` | `/api/v1/watchlist` / `…/watch` | API key | Continuous price watchlist |
 | `*` | `/api/v1/webhooks` … | API key | Webhook subscriptions |
 
 Machine-readable contract: [openapi/openapi.yaml](openapi/openapi.yaml) · Live: `GET {{API_BASE}}/openapi.json`

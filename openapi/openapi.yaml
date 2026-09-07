@@ -36,6 +36,8 @@ tags:
     description: API key management (login session token; see docs/headless-bootstrap.md)
   - name: alerts
     description: Price alerts (requires API key)
+  - name: watchlist
+    description: Account watchlist for continuous price updates (requires API key)
   - name: webhooks
     description: Webhook subscriptions and deliveries (requires API key)
 
@@ -94,7 +96,10 @@ paths:
         block a worker thread in a busy loop.
 
         An API key on this request raises track quotas to the authenticated
-        per-account tier.
+        per-account tier. Optional `watch=true` (auth required) adds the product
+        to your account watchlist for continuous scheduler updates. Optional
+        `refresh=true` (auth required) forces a re-scrape even when the URL is
+        already in the catalog.
       requestBody:
         required: true
         content:
@@ -235,6 +240,146 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/products/{productId}/watch:
+    get:
+      tags: [watchlist]
+      operationId: getWatchStatus
+      summary: Watch status for a product
+      description: Whether the authenticated account watches this product for continuous price updates.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Watch status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchStatusResponse"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags: [watchlist]
+      operationId: watchProduct
+      summary: Watch a product
+      description: |
+        Add the product to your account watchlist so the price scheduler keeps updating it
+        (same mechanism as the dashboard watchlist). Idempotent.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Now watching
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchStatusResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Watch limit reached (watch_limit_reached)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags: [watchlist]
+      operationId: unwatchProduct
+      summary: Unwatch a product
+      description: |
+        Remove the product from your watchlist. Returns `409 alert_requires_watch` while an
+        active price alert exists for the product.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: No longer watching
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchStatusResponse"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Active alert requires watch (alert_requires_watch)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/watchlist:
+    get:
+      tags: [watchlist]
+      operationId: listWatchlist
+      summary: List watched products
+      description: Products this account watches for continuous scheduler updates.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+          description: Max items to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Items to skip
+      responses:
+        "200":
+          description: Watched products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchListResponse"
+        "401":
+          description: Unauthorized
 
   /api/v1/search:
     get:
@@ -764,6 +909,45 @@ components:
             Existing webhook subscription ID (requires API key).
             Mutually exclusive with callback_url. Subscription must include
             track_job_completed and/or track_job_failed.
+        watch:
+          type: boolean
+          default: false
+          description: |
+            If true (API key required), add the ingested product to your account
+            watchlist so the price scheduler keeps updating it.
+        refresh:
+          type: boolean
+          default: false
+          description: |
+            If true (API key required), force a re-scrape even when the URL
+            already has catalog price data.
+
+    WatchStatusResponse:
+      type: object
+      required: [product_id, watching]
+      properties:
+        product_id: { type: string }
+        watching: { type: boolean }
+        watched_at: { type: string, format: date-time, nullable: true }
+
+    WatchListItem:
+      type: object
+      required: [product_id, watched_at, product]
+      properties:
+        product_id: { type: string }
+        watched_at: { type: string, format: date-time }
+        product:
+          $ref: "#/components/schemas/ProductResponse"
+
+    WatchListResponse:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/WatchListItem"
+        total: { type: integer }
 
     JobProduct:
       type: object

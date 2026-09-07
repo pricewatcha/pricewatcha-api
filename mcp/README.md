@@ -23,8 +23,12 @@ Implemented MCP tools (see mcp-server README):
 | `get_price_alert` | `GET /alerts/{id}` (API key) |
 | `update_price_alert` | `PATCH /alerts/{id}` (API key) |
 | `delete_price_alert` | `DELETE /alerts/{id}` (API key) |
+| `watch_product` | `POST /products/{id}/watch` (API key) |
+| `unwatch_product` | `DELETE /products/{id}/watch` (API key) |
+| `list_watchlist` | `GET /watchlist` (API key) |
+| `get_watch_status` | `GET /products/{id}/watch` (API key) |
 
-Alert tools accept `notify_on_drop` / `notify_on_rise` (any price change, no threshold) and optional `min_threshold_price` / `max_threshold_price`. Pass `api_key` (`pwk_live_...`) on each alert tool call.
+Alert tools accept `notify_on_drop` / `notify_on_rise` (any price change, no threshold) and optional `min_threshold_price` / `max_threshold_price`. Pass `api_key` (`pwk_live_...`) on each alert or watchlist tool call. Creating an alert also watches the product.
 
 > Webhook management tools are planned for a future release.
 

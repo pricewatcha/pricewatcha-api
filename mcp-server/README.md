@@ -52,6 +52,10 @@ No Pricewatcha API key is required for the upstream `/api/v1` read endpoints or 
 | `get_price_alert` | Get one alert. Requires `api_key` |
 | `update_price_alert` | Update thresholds, directional flags, or status. Requires `api_key` |
 | `delete_price_alert` | Delete an alert. Requires `api_key` |
+| `watch_product` | Watch a product for continuous updates. Requires `api_key` |
+| `unwatch_product` | Unwatch a product. Requires `api_key` |
+| `list_watchlist` | List watched products. Requires `api_key` |
+| `get_watch_status` | Watch status for one product. Requires `api_key` |
 
 ## Example agent workflows
 
@@ -59,6 +63,7 @@ No Pricewatcha API key is required for the upstream `/api/v1` read endpoints or 
 
 1. `track_product` with the merchant URL — fast shops return `status: "completed"` with `product`
 2. If `status: "running"`, poll `get_job_status` with `job_id` until terminal state
+3. For ongoing updates: `watch_product` (or `track_product` with `watch=true` + `api_key`)
 
 **Check whether a product is historically cheap**
 
@@ -73,7 +78,7 @@ No Pricewatcha API key is required for the upstream `/api/v1` read endpoints or 
 ## Data boundaries
 
 - **Public:** product names, shops, URLs, prices, currency, history, trends, search results.
-- **Private (never returned):** user emails, accounts, watchlists, alert thresholds and notification settings.
+- **Private:** other users' accounts and watchlists. Your own watchlist is manageable with an API key.
 
 See [`../docs/privacy-and-data.md`](../docs/privacy-and-data.md).
 

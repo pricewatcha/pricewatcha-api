@@ -118,12 +118,26 @@ class Pricewatcha:
             raise TypeError(f"Expected dict response, got {type(result).__name__}")
         return result
 
-    def track(self, url: str) -> dict[str, Any]:
-        """POST /track — bounded server-side long-poll (default ~25s)."""
+    def track(
+        self,
+        url: str,
+        *,
+        watch: bool = False,
+        refresh: bool = False,
+    ) -> dict[str, Any]:
+        """POST /track — bounded server-side long-poll (default ~25s).
+
+        ``watch`` / ``refresh`` require an API key on the client.
+        """
+        body: dict[str, Any] = {"url": url}
+        if watch:
+            body["watch"] = True
+        if refresh:
+            body["refresh"] = True
         result = self._request(
             "POST",
             "/track",
-            json={"url": url},
+            json=body,
             expected_status=200,
         )
         if not isinstance(result, dict):
@@ -174,15 +188,56 @@ class Pricewatcha:
         *,
         timeout: float = 180,
         interval: float = 5,
+        watch: bool = False,
+        refresh: bool = False,
     ) -> dict[str, Any]:
         """Client-side loop: track once, then poll get_job until terminal state or timeout."""
-        job = self.track(url)
+        job = self.track(url, watch=watch, refresh=refresh)
         if is_terminal_job_status(job.get("status")):
             return job
         job_id = job.get("job_id")
         if not job_id:
             raise PricewatchaAPIError("Track response missing job_id")
         return self.wait_for_job(str(job_id), timeout=timeout, interval=interval)
+
+    def watch_product(self, product_id: str) -> dict[str, Any]:
+        """POST /products/{productId}/watch — API key required."""
+        result = self._request(
+            "POST", f"/products/{product_id}/watch", expected_status=200
+        )
+        if not isinstance(result, dict):
+            raise TypeError(f"Expected dict response, got {type(result).__name__}")
+        return result
+
+    def unwatch_product(self, product_id: str) -> dict[str, Any]:
+        """DELETE /products/{productId}/watch — API key required."""
+        result = self._request(
+            "DELETE", f"/products/{product_id}/watch", expected_status=200
+        )
+        if not isinstance(result, dict):
+            raise TypeError(f"Expected dict response, got {type(result).__name__}")
+        return result
+
+    def get_watch_status(self, product_id: str) -> dict[str, Any]:
+        """GET /products/{productId}/watch — API key required."""
+        result = self._request("GET", f"/products/{product_id}/watch")
+        if not isinstance(result, dict):
+            raise TypeError(f"Expected dict response, got {type(result).__name__}")
+        return result
+
+    def list_watchlist(
+        self, *, limit: int | None = None, offset: int | None = None
+    ) -> dict[str, Any]:
+        """GET /watchlist — API key required."""
+        params: dict[str, str] = {}
+        if limit is not None:
+            params["limit"] = str(limit)
+        if offset is not None:
+            params["offset"] = str(offset)
+        result = self._request("GET", "/watchlist", params=params or None)
+        if not isinstance(result, dict):
+            raise TypeError(f"Expected dict response, got {type(result).__name__}")
+        return result
 
     def get_product(self, product_id: str) -> dict[str, Any]:
         """GET /products/{productId} — structured product intelligence."""

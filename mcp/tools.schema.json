@@ -58,7 +58,10 @@
         "type": "object",
         "required": ["url"],
         "properties": {
-          "url": { "type": "string", "format": "uri", "description": "Public product page URL (HTTPS)" }
+          "url": { "type": "string", "format": "uri", "description": "Public product page URL (HTTPS)" },
+          "api_key": { "type": "string", "description": "Optional API key (pwk_live_...). Required for watch/refresh." },
+          "watch": { "type": "boolean", "description": "If true (API key required), enroll for continuous scheduler updates." },
+          "refresh": { "type": "boolean", "description": "If true (API key required), force a re-scrape even if already in the catalog." }
         }
       },
       "outputSchema": {
@@ -395,6 +398,83 @@
         "properties": {
           "api_key": { "type": "string" },
           "alert_id": { "type": "integer" }
+        }
+      }
+    },
+    {
+      "name": "watch_product",
+      "title": "Watch product",
+      "description": "Add a catalog product to your account watchlist for continuous scheduler updates. Requires api_key.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["api_key", "product_id"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "product_id": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "unwatch_product",
+      "title": "Unwatch product",
+      "description": "Remove a product from your account watchlist. Requires api_key.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["api_key", "product_id"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "product_id": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "list_watchlist",
+      "title": "List watchlist",
+      "description": "List products your account watches for continuous updates. Requires api_key.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["api_key"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 200 },
+          "offset": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    {
+      "name": "get_watch_status",
+      "title": "Get watch status",
+      "description": "Check whether your account watches a product. Requires api_key.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["api_key", "product_id"],
+        "properties": {
+          "api_key": { "type": "string" },
+          "product_id": { "type": "string" }
         }
       }
     }

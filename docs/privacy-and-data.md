@@ -1,6 +1,8 @@
 # Data boundaries {#data-model}
 
-Catalog **price intelligence** (current price, history, product metadata) is available without authentication. **User-specific data** (accounts, emails, alert settings, private watchlists) is never exposed through the public API.
+Catalog **price intelligence** (current price, history, product metadata) is available without authentication. **User-specific data** (accounts, emails, alert settings) is never exposed on public read endpoints.
+
+Authenticated clients can **manage their own watchlist** via `/api/v1/watchlist` and `/api/v1/products/{id}/watch` (API key required). Other users' watchlists are never returned.
 
 ## Readable fields
 
@@ -12,6 +14,10 @@ Catalog **price intelligence** (current price, history, product metadata) is ava
 - Demo entries may include `"preview": true`
 
 Search, product detail and price history return the same fields whether the product was added via dashboard, API, MCP or demo data.
+
+## Continuous updates
+
+Only products on an account watchlist (dashboard or API watch / alert / product-scoped price webhook) are refreshed by the price scheduler. One-shot `POST /track` without `watch` does not enroll the product for ongoing updates.
 
 ## Product IDs
 

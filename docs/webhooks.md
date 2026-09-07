@@ -9,7 +9,7 @@ Subscribe to event types **globally** or for a single `product_id`. Each event t
 | Scope | Behaviour |
 |-------|-----------|
 | **Global** (`product_id` omitted) | Price events for products **you** track (watchlist) or for which you have an **active price alert**. Not the full catalog. |
-| **Scoped** (`product_id` set) | Price events for that product only. |
+| **Scoped** (`product_id` set) | Price events for that product only. Creating/updating a product-scoped subscription with price events also [watches](watchlist.md) the product for scheduler updates. |
 | **Test** (`POST /webhooks/{id}/test`) | Sends a `webhook_test` payload to verify your endpoint; no product scope. |
 
 Catalog-wide price streaming is not supported. Use the test endpoint to verify delivery, then track products or create alerts for the events you care about.

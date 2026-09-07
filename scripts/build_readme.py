@@ -28,6 +28,7 @@ README_SECTIONS: list[Path] = [
     DOCS / "privacy-and-data.md",
     DOCS / "errors.md",
     DOCS / "alerts.md",
+    DOCS / "watchlist.md",
     DOCS / "webhooks.md",
     DOCS / "integrations" / "mcp.md",
     DOCS / "integrations" / "claude.md",

@@ -4,6 +4,15 @@ All notable changes to the **public API contract**, SDKs and MCP server in this 
 
 Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 
+## 0.1.7 - 2026-09-07
+
+### Added
+
+- **Watchlist API:** `GET /api/v1/watchlist`, `GET|POST|DELETE /api/v1/products/{productId}/watch` (API key). Watched products are included in the price scheduler (same `user_products` path as the dashboard).
+- **`POST /track` options (auth required):** `watch: true` enrolls the product for continuous updates; `refresh: true` forces a re-scrape even when the URL is already in the catalog.
+- **Auto-watch:** creating a price alert, or a product-scoped webhook with price events, watches the product for that account.
+- **MCP / SDK:** `watch_product`, `unwatch_product`, `list_watchlist`, `get_watch_status`; `track` accepts `watch` / `refresh`.
+
 ## 0.1.6 - 2026-08-26
 
 ### Changed
