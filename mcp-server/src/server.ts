@@ -64,7 +64,7 @@ export function createServer(): McpServer {
   const server = new McpServer(
     {
       name: "pricewatcha",
-      version: "0.1.5",
+      version: "0.1.7",
     },
     {
       instructions: SERVER_INSTRUCTIONS,

@@ -13,6 +13,7 @@ Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 - **Auto-watch:** creating a price alert, or a product-scoped webhook with price events, watches the product for that account.
 - **MCP / SDK:** `watch_product`, `unwatch_product`, `list_watchlist`, `get_watch_status`; `track` accepts `watch` / `refresh`.
 - **Claude / ChatGPT guides:** watchlist tools and example prompts documented in the connector setup pages.
+- **SDK / MCP packages:** bumped to 0.1.7.
 
 ## 0.1.6 - 2026-08-26
 
