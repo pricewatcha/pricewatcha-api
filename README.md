@@ -970,7 +970,7 @@ For step-by-step setup, see [Claude](#integration-claude), [ChatGPT](#integratio
 
 ### Claude
 
-**What it enables:** Ask Claude to search for products, track prices, check price history, set alerts and manage webhooks, all in natural language, directly in Claude.ai or the Claude desktop app.
+**What it enables:** Ask Claude to search for products, track prices, check price history, watch products for continuous updates, set alerts and manage webhooks, all in natural language, directly in Claude.ai or the Claude desktop app.
 
 #### How to connect: Claude.ai (web)
 
@@ -990,7 +990,7 @@ https://mcp.pricewatcha.com
 Click **Add**.
 
 **Step 4: Done**  
-Pricewatcha appears in your connector list with read-only tools (`get_api_status`, `get_job_status`, `get_product`, `get_price_history`, `search_products`, `list_price_alerts`, `get_price_alert`) and write tools (`track_product`, `create_price_alert`, `update_price_alert`, `delete_price_alert`). You can now use Pricewatcha in any Claude conversation.
+Pricewatcha appears in your connector list with read-only tools (`get_api_status`, `get_job_status`, `get_product`, `get_price_history`, `search_products`, `list_price_alerts`, `get_price_alert`, `list_watchlist`, `get_watch_status`) and write tools (`track_product`, `create_price_alert`, `update_price_alert`, `delete_price_alert`, `watch_product`, `unwatch_product`). You can now use Pricewatcha in any Claude conversation.
 
 **Step 5: Configure tool permissions (optional)**  
 Open the connector in your connector list (or return to [claude.ai/settings/connectors](https://claude.ai/settings/connectors)) and expand **Tool permissions**.
@@ -1003,7 +1003,7 @@ For each tool — or for the whole **Read-only** / **Write** group — choose wh
 | **Require approval** | Claude asks before each call (default for new connectors) |
 | **Never allow** | Tool is blocked |
 
-For everyday price checks and searches, set the read-only tools (or the whole read-only group) to **Always allow**. For `track_product` and alert tools, pick **Always allow** if you want friction-free writes, or keep **Require approval** if you prefer to confirm first. Alert tools need a Pricewatcha API key (`pwk_live_...`).
+For everyday price checks and searches, set the read-only tools (or the whole read-only group) to **Always allow**. For `track_product`, alert and watchlist tools, pick **Always allow** if you want friction-free writes, or keep **Require approval** if you prefer to confirm first. Alert and watchlist tools need a Pricewatcha API key (`pwk_live_...`).
 
 #### How to connect: Claude Desktop App
 
@@ -1013,16 +1013,17 @@ Try:
 
 - *“Find me a refurbished iPhone 15 Pro under €550”*
 - *“Track this product URL and show me the price history”*
+- *“Watch this product so prices keep updating, then list my watchlist”*
 - *“Set an alert for this product when it drops below €500”*
 - *“Notify me whenever this product gets cheaper — no price target”*
 
-> **Note:** `track_product` is a write tool because it creates a tracking job in the background. It does not modify or delete existing data. Alert tools (`create_price_alert`, `update_price_alert`, `delete_price_alert`) change your saved alerts and require an API key.
+> **Note:** `track_product` is a write tool because it creates a tracking job in the background. It does not modify or delete existing data. Alert tools (`create_price_alert`, `update_price_alert`, `delete_price_alert`) and watchlist tools (`watch_product`, `unwatch_product`, `list_watchlist`, `get_watch_status`) require an API key. Creating an alert also watches the product for continuous scheduler updates.
 
 ---
 
 ### ChatGPT
 
-**What it enables:** Search products, track prices, get price history, set price alerts and manage webhooks, directly in ChatGPT via MCP.
+**What it enables:** Search products, track prices, get price history, watch products for continuous updates, set price alerts and manage webhooks, directly in ChatGPT via MCP.
 
 > **Prerequisite: Developer Mode (one-time)**  
 > Custom MCP connectors require Developer Mode: **Settings → Advanced** → enable **Developer Mode**. Available on Plus, Pro, Team, Business, Enterprise and Edu (not on the free plan). Pricewatcha tools only work while Developer Mode stays on.
@@ -1043,7 +1044,10 @@ https://mcp.pricewatcha.com
 
 - *“Search for a refurbished iPhone 15 Pro under €550”*
 - *“Track this product URL and show me the price history”*
+- *“Watch this product so prices keep updating, then list my watchlist”*
 - *“Notify me whenever this product gets cheaper — no price target”*
+
+Alert and watchlist tools (`create_price_alert`, `watch_product`, `list_watchlist`, …) need a Pricewatcha API key (`pwk_live_...`). Creating an alert also watches the product for continuous scheduler updates.
 
 > **Warning:** ChatGPT may show a **DEV** label on unverified third-party connectors. Pricewatcha only works while **Developer Mode** is enabled.
 
@@ -1411,6 +1415,7 @@ Package / release versioning uses **0.1.x**. HTTP API paths remain `/api/v1`.
 - **`POST /track` options (auth required):** `watch: true` enrolls the product for continuous updates; `refresh: true` forces a re-scrape even when the URL is already in the catalog.
 - **Auto-watch:** creating a price alert, or a product-scoped webhook with price events, watches the product for that account.
 - **MCP / SDK:** `watch_product`, `unwatch_product`, `list_watchlist`, `get_watch_status`; `track` accepts `watch` / `refresh`.
+- **Claude / ChatGPT guides:** watchlist tools and example prompts documented in the connector setup pages.
 
 ### 0.1.6 - 2026-08-26
 

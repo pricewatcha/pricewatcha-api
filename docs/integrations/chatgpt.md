@@ -1,6 +1,6 @@
 ## ChatGPT {#integration-chatgpt}
 
-**What it enables:** Search products, track prices, get price history, set price alerts and manage webhooks, directly in ChatGPT via MCP.
+**What it enables:** Search products, track prices, get price history, watch products for continuous updates, set price alerts and manage webhooks, directly in ChatGPT via MCP.
 
 > **Prerequisite: Developer Mode (one-time)**  
 > Custom MCP connectors require Developer Mode: **Settings → Advanced** → enable **Developer Mode**. Available on Plus, Pro, Team, Business, Enterprise and Edu (not on the free plan). Pricewatcha tools only work while Developer Mode stays on.
@@ -21,6 +21,9 @@
 
 - *“Search for a refurbished iPhone 15 Pro under €550”*
 - *“Track this product URL and show me the price history”*
+- *“Watch this product so prices keep updating, then list my watchlist”*
 - *“Notify me whenever this product gets cheaper — no price target”*
+
+Alert and watchlist tools (`create_price_alert`, `watch_product`, `list_watchlist`, …) need a Pricewatcha API key (`pwk_live_...`). Creating an alert also watches the product for continuous scheduler updates.
 
 > **Warning:** ChatGPT may show a **DEV** label on unverified third-party connectors. Pricewatcha only works while **Developer Mode** is enabled.
