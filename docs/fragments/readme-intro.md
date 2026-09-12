@@ -6,4 +6,4 @@ The Pricewatcha API derives from the [pricewatcha.com](https://pricewatcha.com) 
 
 **Status:** Available · **Version:** `v1` · **Base URL:** `{{API_BASE}}`
 
-**Interactive API keys (browser):** [Developer page]({{SITE_BASE}}/en/developers#api-keys)
+**Interactive API keys (browser):** [Profile & API Keys]({{SITE_BASE}}/profile#api-keys)

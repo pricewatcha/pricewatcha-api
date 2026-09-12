@@ -1,6 +1,6 @@
 ## API keys (browser)
 
-Log in on the [Developer page]({{SITE_BASE}}/en/developers#api-keys) to create and manage API keys in your browser. The full secret is shown **once** at creation.
+Log in and open [Profile & API Keys]({{SITE_BASE}}/profile#api-keys) to create and manage API keys in your browser. The full secret is shown **once** at creation.
 
 For agents without a browser, use [headless key bootstrap](#api-keys-headless-bootstrap) below.
 

@@ -29,7 +29,7 @@ Fast shops return `status: "completed"` with the full `product` in one call. Slo
 
 ### Path 3: Price alert with webhook (API key required)
 
-Create a key on the [Developer page]({{SITE_BASE}}/en/developers#api-keys), then:
+Create a key in [Profile & API Keys]({{SITE_BASE}}/profile#api-keys), then:
 
 ```bash
 curl -s -X POST "{{API_BASE}}/alerts" \

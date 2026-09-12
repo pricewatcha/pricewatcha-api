@@ -14,7 +14,7 @@ Authorization: Bearer pwk_live_…
 
 | Credential | Format | When to use |
 |------------|--------|-------------|
-| **API key** | `pwk_live_…` | **Recommended** for scripts, agents, n8n and server integrations. Create on the [Developer page](https://pricewatcha.com/en/developers#api-keys). |
+| **API key** | `pwk_live_…` | **Recommended** for scripts, agents, n8n and server integrations. Create in [Profile & API Keys](https://pricewatcha.com/profile#api-keys). |
 | **Login session token** | JWT from `POST {{SITE_BASE}}/api/auth/login` | Website UI and [headless key bootstrap](#api-keys-headless-bootstrap) only |
 
 Do not use the login session token for alerts, webhooks or other API v1 calls once you have an API key.

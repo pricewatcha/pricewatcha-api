@@ -103,7 +103,7 @@ The receiver URL depends on your LoxBerry version:
 
 **Step 1 — Create a Pricewatcha API key**
 
-Create an [API key](#api-keys-headless-bootstrap) on this page (requires login). Alerts and webhooks require authentication.
+Create an [API key]({{SITE_BASE}}/profile#api-keys) in Profile (requires login). Alerts and webhooks require authentication.
 
 **Step 2 — Create a Pricewatcha price alert pointing to LoxBerry**
 

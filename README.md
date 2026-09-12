@@ -6,7 +6,7 @@ The Pricewatcha API derives from the [pricewatcha.com](https://pricewatcha.com) 
 
 **Status:** Available · **Version:** `v1` · **Base URL:** `https://pricewatcha.com/api/v1`
 
-**Interactive API keys (browser):** [Developer page](https://pricewatcha.com/en/developers#api-keys)
+**Interactive API keys (browser):** [Profile & API Keys](https://pricewatcha.com/profile#api-keys)
 
 ---
 
@@ -41,7 +41,7 @@ Fast shops return `status: "completed"` with the full `product` in one call. Slo
 
 #### Path 3: Price alert with webhook (API key required)
 
-Create a key on the [Developer page](https://pricewatcha.com/en/developers#api-keys), then:
+Create a key in [Profile & API Keys](https://pricewatcha.com/profile#api-keys), then:
 
 ```bash
 curl -s -X POST "https://pricewatcha.com/api/v1/alerts" \
@@ -72,7 +72,7 @@ Authorization: Bearer pwk_live_…
 
 | Credential | Format | When to use |
 |------------|--------|-------------|
-| **API key** | `pwk_live_…` | **Recommended** for scripts, agents, n8n and server integrations. Create on the [Developer page](https://pricewatcha.com/en/developers#api-keys). |
+| **API key** | `pwk_live_…` | **Recommended** for scripts, agents, n8n and server integrations. Create in [Profile & API Keys](https://pricewatcha.com/profile#api-keys). |
 | **Login session token** | JWT from `POST https://pricewatcha.com/api/auth/login` | Website UI and [headless key bootstrap](#api-keys-headless-bootstrap) only |
 
 Do not use the login session token for alerts, webhooks or other API v1 calls once you have an API key.
@@ -83,7 +83,7 @@ See [Access model](#access-model) for which routes are public vs authenticated.
 
 ### API keys (browser)
 
-Log in on the [Developer page](https://pricewatcha.com/en/developers#api-keys) to create and manage API keys in your browser. The full secret is shown **once** at creation.
+Log in and open [Profile & API Keys](https://pricewatcha.com/profile#api-keys) to create and manage API keys in your browser. The full secret is shown **once** at creation.
 
 For agents without a browser, use [headless key bootstrap](#api-keys-headless-bootstrap) below.
 
@@ -1331,7 +1331,7 @@ The receiver URL depends on your LoxBerry version:
 
 **Step 1 — Create a Pricewatcha API key**
 
-Create an [API key](#api-keys-headless-bootstrap) on this page (requires login). Alerts and webhooks require authentication.
+Create an [API key](https://pricewatcha.com/profile#api-keys) in Profile (requires login). Alerts and webhooks require authentication.
 
 **Step 2 — Create a Pricewatcha price alert pointing to LoxBerry**
 

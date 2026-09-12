@@ -842,7 +842,7 @@ components:
       scheme: bearer
       description: |
         API key with format `pwk_live_…`. Recommended for scripts, agents, and integrations.
-        Create on the Developer page or via headless bootstrap. The full key is shown once
+        Create in Profile & API Keys or via headless bootstrap. The full key is shown once
         at creation — store it securely.
 
   schemas:
