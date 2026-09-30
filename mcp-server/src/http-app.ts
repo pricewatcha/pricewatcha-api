@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
+import { createAccessLogMiddleware } from "./middleware/access-log.js";
 import { createHostValidationMiddleware } from "./middleware/host-validation.js";
 import { createJsonBodyErrorMiddleware } from "./middleware/json-body-error.js";
 import { createMcpHeaderNormalizationMiddleware } from "./middleware/mcp-header-normalization.js";
@@ -48,6 +49,8 @@ export function createHttpApp(): Express {
   // Content-Type: text/octet-stream; normalize so body parsing + MCP SDK succeed.
   app.use(createMcpHeaderNormalizationMiddleware());
   app.use(express.json());
+  // After json(): so access logs can include JSON-RPC method when present.
+  app.use(createAccessLogMiddleware());
   app.set("trust proxy", 1);
 
   // Public probes/assets — registered before Host/Origin guards.
