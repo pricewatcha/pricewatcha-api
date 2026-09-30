@@ -131,6 +131,9 @@ export const DEFAULT_MCP_ALLOWED_ORIGINS = [
   "https://claude.ai",
   "https://claude.com",
   "https://chatgpt.com",
+  "https://chat.openai.com",
+  // OpenAI Apps / plugin submission UI (Scan Tools) uses this origin.
+  "https://platform.openai.com",
   "https://pricewatcha.com",
 ] as const;
 
