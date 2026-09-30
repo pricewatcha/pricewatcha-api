@@ -3,11 +3,24 @@ import type { RequestHandler } from "express";
 
 const MCP_ACCEPT = "application/json, text/event-stream";
 
+const OAUTH_PATHS = new Set([
+  "/token",
+  "/authorize",
+  "/register",
+  "/revoke",
+]);
+
 function headerValue(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) {
     return value[0];
   }
   return value;
+}
+
+function requestPath(req: { originalUrl?: string; url?: string; path?: string }): string {
+  const raw = req.originalUrl || req.url || req.path || "/";
+  const q = raw.indexOf("?");
+  return q === -1 ? raw : raw.slice(0, q);
 }
 
 /** Rewrite a header in both `headers` and `rawHeaders` (Hono reads rawHeaders). */
@@ -25,7 +38,6 @@ function setIncomingHeader(
     if (raw[i].toLowerCase() === lower) {
       raw[i + 1] = value;
       found = true;
-      // Keep scanning in case of duplicates; last write wins for headers map.
     }
   }
   if (!found) {
@@ -68,6 +80,12 @@ function normalizedAccept(acceptRaw: string): string | undefined {
  */
 export function createMcpHeaderNormalizationMiddleware(): RequestHandler {
   return (req, _res, next) => {
+    // Leave OAuth endpoints alone — they are not Streamable HTTP MCP.
+    if (OAUTH_PATHS.has(requestPath(req))) {
+      next();
+      return;
+    }
+
     const acceptRaw = headerValue(req.headers.accept) ?? "";
     const nextAccept = normalizedAccept(acceptRaw);
     if (nextAccept) {

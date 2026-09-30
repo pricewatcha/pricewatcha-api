@@ -24,6 +24,7 @@ describe("access log middleware", () => {
     const req = {
       method: "POST",
       path: "/mcp",
+      originalUrl: "/mcp",
       headers: {
         origin: "https://platform.openai.com",
         accept: "application/json, text/event-stream",
@@ -58,6 +59,57 @@ describe("access log middleware", () => {
     assert.match(lines[0], /origin=https:\/\/platform\.openai\.com/);
     assert.match(lines[0], /rpc=tools\/list/);
     assert.doesNotMatch(lines[0], /super-secret-token/);
+  });
+
+  it("logs oauth_error and grant diagnostics without secrets", () => {
+    const lines: string[] = [];
+    const middleware = createAccessLogMiddleware((line) => lines.push(line));
+
+    const req = {
+      method: "POST",
+      path: "/token",
+      originalUrl: "/token",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/x-www-form-urlencoded",
+        "user-agent": "openai-connectors-oauth/1.0",
+      },
+      body: {
+        grant_type: "refresh_token",
+        client_id: "abcdef12-3456-7890-abcd-ef1234567890",
+        client_secret: "should-not-appear",
+        refresh_token: "also-secret",
+        resource: "https://mcp.pricewatcha.com/mcp",
+      },
+    };
+    const listeners: Record<string, Array<() => void>> = {};
+    const res = {
+      statusCode: 400,
+      json(body: unknown) {
+        this.statusCode = 400;
+        return body;
+      },
+      on(event: string, cb: () => void) {
+        (listeners[event] ??= []).push(cb);
+      },
+    };
+
+    middleware(req as never, res as never, () => undefined);
+    res.json({
+      error: "invalid_grant",
+      error_description: "Invalid refresh token",
+    });
+    for (const cb of listeners.finish ?? []) {
+      cb();
+    }
+
+    assert.equal(lines.length, 1);
+    assert.match(lines[0], /grant=refresh_token/);
+    assert.match(lines[0], /has_secret=true/);
+    assert.match(lines[0], /has_refresh=true/);
+    assert.match(lines[0], /oauth_error=invalid_grant:Invalid refresh token/);
+    assert.doesNotMatch(lines[0], /should-not-appear/);
+    assert.doesNotMatch(lines[0], /also-secret/);
   });
 
   it("skips /health probe noise", () => {

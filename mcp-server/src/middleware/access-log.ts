@@ -4,6 +4,13 @@ import { isPublicUnguardedPath } from "./public-paths.js";
 
 type AccessLogFn = (line: string) => void;
 
+const OAUTH_PATHS = new Set([
+  "/token",
+  "/authorize",
+  "/register",
+  "/revoke",
+]);
+
 function headerValue(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) {
     return value[0];
@@ -40,6 +47,36 @@ function requestPath(req: Request): string {
   return q === -1 ? raw : raw.slice(0, q);
 }
 
+function formField(body: unknown, key: string): string | undefined {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return undefined;
+  }
+  const value = (body as Record<string, unknown>)[key];
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+/** Safe OAuth token/register diagnostics — never logs secrets, codes, or tokens. */
+function oauthDiag(req: Request, path: string): string {
+  if (!OAUTH_PATHS.has(path)) {
+    return "";
+  }
+  const body = req.body;
+  const grant = formField(body, "grant_type") ?? "-";
+  const clientId = formField(body, "client_id");
+  const redirectUri = formField(body, "redirect_uri") ?? "-";
+  const resource = formField(body, "resource") ?? "-";
+  const hasCode = Boolean(formField(body, "code"));
+  const hasVerifier = Boolean(formField(body, "code_verifier"));
+  const hasRefresh = Boolean(formField(body, "refresh_token"));
+  const hasSecret = Boolean(formField(body, "client_secret"));
+  const clientIdShort = clientId ? `${clientId.slice(0, 8)}…` : "-";
+  return (
+    ` grant=${grant} client_id=${clientIdShort} has_secret=${hasSecret}` +
+    ` has_code=${hasCode} has_verifier=${hasVerifier} has_refresh=${hasRefresh}` +
+    ` redirect_uri=${redirectUri} resource=${resource}`
+  );
+}
+
 /**
  * One-line access logs for diagnosing OpenAI Scan Tools / connector traffic.
  * Skips noisy public probe paths (health, favicons). Never logs Authorization tokens.
@@ -55,6 +92,29 @@ export function createAccessLogMiddleware(
     }
 
     const started = Date.now();
+    let oauthError: string | undefined;
+
+    if (OAUTH_PATHS.has(path)) {
+      const originalJson = res.json.bind(res);
+      res.json = ((body: unknown) => {
+        if (
+          res.statusCode >= 400 &&
+          body &&
+          typeof body === "object" &&
+          !Array.isArray(body)
+        ) {
+          const err = body as { error?: unknown; error_description?: unknown };
+          const code = typeof err.error === "string" ? err.error : "unknown";
+          const desc =
+            typeof err.error_description === "string"
+              ? truncate(err.error_description, 120)
+              : "";
+          oauthError = desc ? `${code}:${desc}` : code;
+        }
+        return originalJson(body);
+      }) as Response["json"];
+    }
+
     res.on("finish", () => {
       const origin = headerValue(req.headers.origin) ?? "-";
       const ua = truncate(headerValue(req.headers["user-agent"]) ?? "-", 80);
@@ -65,10 +125,14 @@ export function createAccessLogMiddleware(
       );
       const rpc = extractJsonRpcMethod(req.body) ?? "-";
       const ms = Date.now() - started;
+      const oauth =
+        OAUTH_PATHS.has(path)
+          ? `${oauthDiag(req, path)}${oauthError ? ` oauth_error=${oauthError}` : ""}`
+          : "";
       log(
         `access ${req.method} ${path} status=${res.statusCode} ${ms}ms ` +
           `auth=${authKind(req)} origin=${origin} rpc=${rpc} ` +
-          `accept=${accept} content-type=${contentType} ua=${ua}`,
+          `accept=${accept} content-type=${contentType} ua=${ua}${oauth}`,
       );
     });
 
