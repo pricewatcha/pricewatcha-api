@@ -58,6 +58,22 @@ describe("Origin header validation", () => {
       body: INITIALIZE_BODY,
     });
     assert.notEqual(res.status, 403);
+    assert.equal(res.headers.get("access-control-allow-origin"), "https://claude.ai");
+  });
+
+  it("allows OPTIONS preflight for OpenAI Platform origin", async () => {
+    const res = await fetch(`${baseUrl}/`, {
+      method: "OPTIONS",
+      headers: {
+        Origin: "https://platform.openai.com",
+        "Access-Control-Request-Method": "POST",
+      },
+    });
+    assert.equal(res.status, 204);
+    assert.equal(
+      res.headers.get("access-control-allow-origin"),
+      "https://platform.openai.com",
+    );
   });
 
   it("rejects POST / with HTTP 403 for a disallowed Origin", async () => {

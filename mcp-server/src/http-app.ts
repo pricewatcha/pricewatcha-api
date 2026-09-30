@@ -3,6 +3,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 
 import { createHostValidationMiddleware } from "./middleware/host-validation.js";
 import { createJsonBodyErrorMiddleware } from "./middleware/json-body-error.js";
+import { createMcpHeaderNormalizationMiddleware } from "./middleware/mcp-header-normalization.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { getDbPool, mountOAuthRoutes } from "./oauth/setup.js";
 import { mountFaviconRoutes } from "./routes/favicon.js";
@@ -43,6 +44,9 @@ async function handleMcpPost(req: Request, res: Response): Promise<void> {
 
 export function createHttpApp(): Express {
   const app = express();
+  // Before express.json(): OpenAI Scan Tools may send Accept: */* or
+  // Content-Type: text/octet-stream; normalize so body parsing + MCP SDK succeed.
+  app.use(createMcpHeaderNormalizationMiddleware());
   app.use(express.json());
   app.set("trust proxy", 1);
 
