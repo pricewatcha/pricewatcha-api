@@ -9,7 +9,10 @@ import type {
 } from "@modelcontextprotocol/sdk/server/auth/provider.js";
 import type { OAuthRegisteredClientsStore } from "@modelcontextprotocol/sdk/server/auth/clients.js";
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import { InvalidRequestError } from "@modelcontextprotocol/sdk/server/auth/errors.js";
+import {
+  InvalidGrantError,
+  InvalidRequestError,
+} from "@modelcontextprotocol/sdk/server/auth/errors.js";
 import { checkResourceAllowed } from "@modelcontextprotocol/sdk/shared/auth-utils.js";
 
 import { getMcpResourceUrlFromRequest } from "../utils/public-origin.js";
@@ -206,7 +209,7 @@ export class InMemoryOAuthProvider implements OAuthServerProvider {
   ): Promise<string> {
     const pending = this.codes.get(authorizationCode);
     if (!pending) {
-      throw new InvalidRequestError("Invalid authorization code");
+      throw new InvalidGrantError("Invalid authorization code");
     }
     return pending.params.codeChallenge;
   }
@@ -217,10 +220,10 @@ export class InMemoryOAuthProvider implements OAuthServerProvider {
   ): Promise<OAuthTokens> {
     const pending = this.codes.get(authorizationCode);
     if (!pending) {
-      throw new InvalidRequestError("Invalid authorization code");
+      throw new InvalidGrantError("Invalid authorization code");
     }
     if (pending.client.client_id !== client.client_id) {
-      throw new InvalidRequestError("Authorization code was not issued to this client");
+      throw new InvalidGrantError("Authorization code was not issued to this client");
     }
 
     this.codes.delete(authorizationCode);
@@ -240,7 +243,7 @@ export class InMemoryOAuthProvider implements OAuthServerProvider {
   ): Promise<OAuthTokens> {
     const stored = this.refreshTokens.get(refreshToken);
     if (!stored || stored.clientId !== client.client_id || stored.expiresAt < Date.now()) {
-      throw new InvalidRequestError("Invalid refresh token");
+      throw new InvalidGrantError("Invalid refresh token");
     }
 
     this.refreshTokens.delete(refreshToken);
@@ -398,15 +401,15 @@ export class DbOAuthProvider implements OAuthServerProvider {
     );
 
     if (result.rowCount === 0) {
-      throw new InvalidRequestError("Invalid authorization code");
+      throw new InvalidGrantError("Invalid authorization code");
     }
 
     const row = result.rows[0]!;
     if (row.used || row.expires_at.getTime() < Date.now()) {
-      throw new InvalidRequestError("Invalid authorization code");
+      throw new InvalidGrantError("Invalid authorization code");
     }
     if (row.client_id !== client.client_id) {
-      throw new InvalidRequestError("Authorization code was not issued to this client");
+      throw new InvalidGrantError("Authorization code was not issued to this client");
     }
 
     return row.code_challenge;
@@ -425,12 +428,12 @@ export class DbOAuthProvider implements OAuthServerProvider {
     );
 
     if (result.rowCount === 0) {
-      throw new InvalidRequestError("Invalid authorization code");
+      throw new InvalidGrantError("Invalid authorization code");
     }
 
     const row = result.rows[0]!;
     if (row.client_id !== client.client_id) {
-      throw new InvalidRequestError("Authorization code was not issued to this client");
+      throw new InvalidGrantError("Authorization code was not issued to this client");
     }
 
     await this.pool.query(
@@ -463,7 +466,7 @@ export class DbOAuthProvider implements OAuthServerProvider {
     );
 
     if (result.rowCount === 0) {
-      throw new InvalidRequestError("Invalid refresh token");
+      throw new InvalidGrantError("Invalid refresh token");
     }
 
     const row = result.rows[0]!;
@@ -472,7 +475,7 @@ export class DbOAuthProvider implements OAuthServerProvider {
       !row.refresh_expires_at ||
       row.refresh_expires_at.getTime() < Date.now()
     ) {
-      throw new InvalidRequestError("Invalid refresh token");
+      throw new InvalidGrantError("Invalid refresh token");
     }
 
     await this.pool.query(`DELETE FROM oauth_tokens WHERE refresh_token = $1`, [refreshToken]);

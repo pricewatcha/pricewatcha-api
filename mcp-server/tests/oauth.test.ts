@@ -178,6 +178,24 @@ describe("MCP OAuth", () => {
     assert.ok(tokens.access_token);
     assert.ok(tokens.refresh_token);
 
+    const badRefresh = await fetch(`${baseUrl}/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        client_id: client.client_id,
+        refresh_token: "not-a-real-refresh-token",
+        resource: resourceUrl,
+      }),
+    });
+    assert.equal(badRefresh.status, 400);
+    const badBody = (await badRefresh.json()) as {
+      error?: string;
+      error_description?: string;
+    };
+    assert.equal(badBody.error, "invalid_grant");
+    assert.match(badBody.error_description ?? "", /refresh token/i);
+
     const mcpRes = await fetch(`${baseUrl}/`, {
       method: "POST",
       headers: {
