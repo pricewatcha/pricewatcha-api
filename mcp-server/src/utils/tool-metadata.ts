@@ -30,21 +30,24 @@ export const READ_ONLY_TOOL_ANNOTATIONS: ToolAnnotations = {
 export const TRACK_PRODUCT_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
   destructiveHint: false,
-  openWorldHint: false,
+  // Fetches merchant product pages / external shop APIs.
+  openWorldHint: true,
   idempotentHint: false,
 };
 
 export const CREATE_ALERT_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
   destructiveHint: false,
-  openWorldHint: false,
+  // Persists alerts and may notify via user-controlled channels (email/webhook).
+  openWorldHint: true,
   idempotentHint: false,
 };
 
 export const UPDATE_ALERT_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
-  destructiveHint: false,
-  openWorldHint: false,
+  // Can disable/overwrite alert thresholds and notification settings.
+  destructiveHint: true,
+  openWorldHint: true,
   idempotentHint: true,
 };
 
@@ -58,7 +61,8 @@ export const DELETE_ALERT_ANNOTATIONS: ToolAnnotations = {
 export const WATCH_ANNOTATIONS: ToolAnnotations = {
   readOnlyHint: false,
   destructiveHint: false,
-  openWorldHint: false,
+  // Enqueues ongoing external price checks for the watched product.
+  openWorldHint: true,
   idempotentHint: true,
 };
 
