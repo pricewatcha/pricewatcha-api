@@ -1,0 +1,95 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "app-6a25ac7f01c481919f006038ddb4ba51",
+  "version": "1.0.5",
+  "description": "Analyze product price data: catalog search, historical lows/highs, trends, and alerts when tracked prices change.",
+  "author": {
+    "name": "Torsten Stra\u00df"
+  },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "capabilities": [
+          "Analyze historical price lows, highs, averages, and trends",
+          "Search the Pricewatcha product price catalog",
+          "Track a merchant product URL to collect price data",
+          "Create watchlists and price-change alerts"
+        ],
+        "category": "Data & Analytics",
+        "defaultPrompt": [
+          "Analyze the price history and trend for demo_iphone_15_pro",
+          "Is demo_iphone_15_pro near its historical low?",
+          "Search the Pricewatcha catalog for iPhone 15 Pro"
+        ],
+        "developerName": "Torsten Stra\u00df",
+        "displayName": "Pricewatcha",
+        "longDescription": "Pricewatcha is a price-data plugin for ChatGPT. Its main purpose is product price analytics: search a structured catalog, inspect current and historical prices, and surface lows, highs, averages, and trends so you can decide whether a price looks good. You can also submit a public merchant product URL for tracking, manage a watchlist, and create price alerts. Catalog and history reads work without an account; alert and watchlist tools require a Pricewatcha API key.",
+        "privacyPolicyURL": "https://pricewatcha.com/en/privacy",
+        "shortDescription": "Product price analytics",
+        "supportURL": "https://pricewatcha.com/en/faq",
+        "termsOfServiceURL": "https://pricewatcha.com/en/terms-of-use",
+        "websiteURL": "https://pricewatcha.com",
+        "logo": "./assets/logo.png",
+        "logoDark": "./assets/logo-dark.png",
+        "composerIcon": "./assets/icon.png",
+        "composerIconDark": "./assets/icon-dark.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Check API availability",
+              "prompt": "Can Pricewatcha respond right now, and what API version is available?",
+              "tools_triggered": "get_api_status",
+              "expected_behavior": "Calls get_api_status and summarizes Pricewatcha health and API discovery details."
+            },
+            {
+              "description": "Search the product catalog",
+              "prompt": "Find iPhone 15 Pro products in the Pricewatcha catalog.",
+              "tools_triggered": "search_products",
+              "expected_behavior": "Calls search_products and returns matching catalog products with IDs and price fields."
+            },
+            {
+              "description": "Inspect a demo product",
+              "prompt": "Show me the current Pricewatcha data for demo_iphone_15_pro.",
+              "tools_triggered": "get_product",
+              "expected_behavior": "Calls get_product and returns name, shop, current price, currency, and status when available."
+            },
+            {
+              "description": "Analyze price history and trend",
+              "prompt": "Is demo_iphone_15_pro historically cheap right now?",
+              "tools_triggered": "get_price_history",
+              "expected_behavior": "Calls get_price_history and compares the current price to historical low, high, average, and trend."
+            },
+            {
+              "description": "Compare two demo products",
+              "prompt": "Compare current Pricewatcha prices for demo_iphone_15_pro and demo_galaxy_s24.",
+              "tools_triggered": "get_product",
+              "expected_behavior": "Calls get_product for both demo IDs and clearly compares their current prices and shops."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Account or API-key management is out of scope",
+              "prompt": "Log in to my Pricewatcha account and create a new API key."
+            },
+            {
+              "description": "Generic shopping advice without a Pricewatcha lookup",
+              "prompt": "Which laptop should I buy for video editing?"
+            },
+            {
+              "description": "Cannot modify merchant websites",
+              "prompt": "Update the price shown on this merchant product page to 399 euros."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "Pricewatcha provides product price analytics and tracking. It does not sell products or process payments.",
+        "demo_recording_url": "https://assets.pricewatcha.com/pricewatcha-demo.mp4"
+      },
+      "publication": {
+        "release_notes": "1.0.5: Include demo walkthrough URL for MCP review (Cloudflare R2 assets)."
+      }
+    }
+  }
+}

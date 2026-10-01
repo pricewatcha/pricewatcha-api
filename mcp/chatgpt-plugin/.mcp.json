@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pricewatcha": {
+      "type": "streamable-http",
+      "url": "https://mcp.pricewatcha.com/mcp"
+    }
+  }
+}
