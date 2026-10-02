@@ -1,8 +1,8 @@
 /**
- * Per-request MCP → API identity for rate limits.
+ * Per-request MCP → API identity for rate limits and usage attribution.
  *
  * Express sets AsyncLocalStorage around each MCP POST; tools/getClient() read it
- * and forward X-Pricewatcha-Client-Id + proxy secret to /api/v1.
+ * and forward X-Pricewatcha-Client-Id + proxy secret (+ caller origin) to /api/v1.
  */
 
 import { createHash } from "node:crypto";
@@ -10,9 +10,13 @@ import { AsyncLocalStorage } from "node:async_hooks";
 
 import type { Request } from "express";
 
+import { resolveClientOriginFromRequest } from "./client-origin.js";
+
 export type McpRequestContext = {
   /** Opaque stable id forwarded as X-Pricewatcha-Client-Id (no raw tokens/IPs). */
   clientId: string;
+  /** Caller site origin (https://host) from Origin / UA / Referer when known. */
+  clientOrigin?: string;
 };
 
 export const mcpRequestContext = new AsyncLocalStorage<McpRequestContext>();
@@ -37,6 +41,10 @@ export function deriveMcpClientId(req: Request): string {
   return `ip_${sha256Prefix(ip)}`;
 }
 
+export function deriveMcpClientOrigin(req: Request): string | undefined {
+  return resolveClientOriginFromRequest(req.headers);
+}
+
 export function runWithMcpRequestContext<T>(
   ctx: McpRequestContext,
   fn: () => Promise<T>,
@@ -46,4 +54,8 @@ export function runWithMcpRequestContext<T>(
 
 export function getMcpRequestClientId(): string | undefined {
   return mcpRequestContext.getStore()?.clientId;
+}
+
+export function getMcpRequestClientOrigin(): string | undefined {
+  return mcpRequestContext.getStore()?.clientOrigin;
 }

@@ -13,12 +13,14 @@ import { mountRootPageRoutes } from "./routes/root-page.js";
 import { createServer } from "./server.js";
 import {
   deriveMcpClientId,
+  deriveMcpClientOrigin,
   runWithMcpRequestContext,
 } from "./utils/request-context.js";
 
 async function handleMcpPost(req: Request, res: Response): Promise<void> {
   const clientId = deriveMcpClientId(req);
-  await runWithMcpRequestContext({ clientId }, async () => {
+  const clientOrigin = deriveMcpClientOrigin(req);
+  await runWithMcpRequestContext({ clientId, clientOrigin }, async () => {
     const server = createServer();
     try {
       const transport = new StreamableHTTPServerTransport({

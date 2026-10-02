@@ -1,5 +1,8 @@
 import type { Request, RequestHandler, Response } from "express";
 
+import { reportMcpAccessEvent } from "../utils/mcp-access-ingest.js";
+import { deriveMcpClientId } from "../utils/request-context.js";
+import { resolveClientOriginFromRequest } from "../utils/client-origin.js";
 import { isPublicUnguardedPath } from "./public-paths.js";
 
 type AccessLogFn = (line: string) => void;
@@ -10,6 +13,8 @@ const OAUTH_PATHS = new Set([
   "/register",
   "/revoke",
 ]);
+
+const MCP_TRANSPORT_PATHS = new Set(["/", "/mcp"]);
 
 function headerValue(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) {
@@ -80,6 +85,7 @@ function oauthDiag(req: Request, path: string): string {
 /**
  * One-line access logs for diagnosing OpenAI Scan Tools / connector traffic.
  * Skips noisy public probe paths (health, favicons). Never logs Authorization tokens.
+ * Also fire-and-forgets MCP transport hits to the API usage ingest endpoint.
  */
 export function createAccessLogMiddleware(
   log: AccessLogFn = console.log,
@@ -116,7 +122,7 @@ export function createAccessLogMiddleware(
     }
 
     res.on("finish", () => {
-      const origin = headerValue(req.headers.origin) ?? "-";
+      const originHeader = headerValue(req.headers.origin) ?? "-";
       const ua = truncate(headerValue(req.headers["user-agent"]) ?? "-", 80);
       const accept = truncate(headerValue(req.headers.accept) ?? "-", 60);
       const contentType = truncate(
@@ -131,9 +137,25 @@ export function createAccessLogMiddleware(
           : "";
       log(
         `access ${req.method} ${path} status=${res.statusCode} ${ms}ms ` +
-          `auth=${authKind(req)} origin=${origin} rpc=${rpc} ` +
+          `auth=${authKind(req)} origin=${originHeader} rpc=${rpc} ` +
           `accept=${accept} content-type=${contentType} ua=${ua}${oauth}`,
       );
+
+      if (
+        MCP_TRANSPORT_PATHS.has(path) &&
+        (req.method || "").toUpperCase() === "POST" &&
+        !OAUTH_PATHS.has(path)
+      ) {
+        const clientOrigin = resolveClientOriginFromRequest(req.headers);
+        reportMcpAccessEvent({
+          rpc: rpc === "-" ? undefined : rpc,
+          status_code: res.statusCode,
+          client_id: deriveMcpClientId(req),
+          client_origin: clientOrigin,
+          method: req.method,
+          path,
+        });
+      }
     });
 
     next();

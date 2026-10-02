@@ -1,7 +1,10 @@
 import { PricewatchaClient, DEFAULT_BASE_URL } from "@pricewatcha/sdk";
 
 import { getMcpProxySecret } from "../config.js";
-import { getMcpRequestClientId } from "./request-context.js";
+import {
+  getMcpRequestClientId,
+  getMcpRequestClientOrigin,
+} from "./request-context.js";
 
 const ENV_BASE_URL = "PRICEWATCHA_API_BASE_URL";
 
@@ -15,7 +18,8 @@ export function getApiBaseUrl(): string {
  * SDK client for the current MCP request.
  *
  * Forwards a stable client id (+ shared proxy secret) so API rate limits are
- * keyed per MCP caller, not the MCP service egress IP.
+ * keyed per MCP caller, not the MCP service egress IP. Also forwards the
+ * caller site origin when known for usage reporting.
  */
 export function getClient(options?: { apiKey?: string }): PricewatchaClient {
   const baseUrl = getApiBaseUrl();
@@ -24,9 +28,13 @@ export function getClient(options?: { apiKey?: string }): PricewatchaClient {
   };
   const secret = getMcpProxySecret();
   const clientId = getMcpRequestClientId();
+  const clientOrigin = getMcpRequestClientOrigin();
   if (secret && clientId) {
     headers["X-Pricewatcha-Client-Id"] = clientId;
     headers["X-Pricewatcha-Proxy-Secret"] = secret;
+    if (clientOrigin) {
+      headers["X-Pricewatcha-Client-Origin"] = clientOrigin;
+    }
   }
   return new PricewatchaClient({
     baseUrl,

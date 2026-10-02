@@ -20,6 +20,9 @@ describe("access log middleware", () => {
   it("logs method, path, status, rpc method, and omits bearer token", () => {
     const lines: string[] = [];
     const middleware = createAccessLogMiddleware((line) => lines.push(line));
+    const prevSecret = process.env.PRICEWATCHA_MCP_PROXY_SECRET;
+    delete process.env.PRICEWATCHA_MCP_PROXY_SECRET;
+    delete process.env.API_V1_MCP_PROXY_SECRET;
 
     const req = {
       method: "POST",
@@ -59,6 +62,12 @@ describe("access log middleware", () => {
     assert.match(lines[0], /origin=https:\/\/platform\.openai\.com/);
     assert.match(lines[0], /rpc=tools\/list/);
     assert.doesNotMatch(lines[0], /super-secret-token/);
+
+    if (prevSecret === undefined) {
+      delete process.env.PRICEWATCHA_MCP_PROXY_SECRET;
+    } else {
+      process.env.PRICEWATCHA_MCP_PROXY_SECRET = prevSecret;
+    }
   });
 
   it("logs oauth_error and grant diagnostics without secrets", () => {
