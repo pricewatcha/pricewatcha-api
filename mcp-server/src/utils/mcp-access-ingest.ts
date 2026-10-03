@@ -44,8 +44,9 @@ export function reportMcpAccessEvent(
     return;
   }
 
+  // PRICEWATCHA_API_BASE_URL already includes /api/v1 (same as the SDK).
   const baseUrl = getApiBaseUrl();
-  const url = `${baseUrl}/api/v1/mcp-access`;
+  const url = `${baseUrl}/mcp-access`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), INGEST_TIMEOUT_MS);
 
