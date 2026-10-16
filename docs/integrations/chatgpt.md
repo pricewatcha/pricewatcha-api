@@ -2,20 +2,13 @@
 
 **What it enables:** Search products, track prices, get price history, watch products for continuous updates, set price alerts and manage webhooks, directly in ChatGPT via MCP.
 
-> **Prerequisite: Developer Mode (one-time)**  
-> Custom MCP connectors require Developer Mode: **Settings → Advanced** → enable **Developer Mode**. Available on Plus, Pro, Team, Business, Enterprise and Edu (not on the free plan). Pricewatcha tools only work while Developer Mode stays on.
+Pricewatcha is available as an approved ChatGPT plugin in the official Plugins store.
 
-**Step 1:** Go to **Settings → Apps** and click **Add custom connector**.
+**Step 1:** Open **Plugins** in the ChatGPT sidebar and search for **Pricewatcha**.
 
-**Step 2:** Paste the MCP URL:
+**Step 2:** Open the listing and click **Install plugin**.
 
-```
-{{MCP_URL}}
-```
-
-**Optional connector logo:** PNG, max 10 KB. [Download from {{SITE_BASE}}/static/img/mcp/chatgpt-logo.png]({{SITE_BASE}}/static/img/mcp/chatgpt-logo.png)
-
-**Step 3: Authentication:** Select **OAuth**. ChatGPT handles the flow; you may see a brief authorization prompt on first connect.
+**Step 3:** Confirm **Connect Pricewatcha** on the authorization screen. ChatGPT may briefly open a Pricewatcha sign-in page to complete OAuth.
 
 **Step 4: Done.** Example prompts:
 
@@ -26,4 +19,4 @@
 
 Alert and watchlist tools (`create_price_alert`, `watch_product`, `list_watchlist`, …) need a Pricewatcha API key (`pwk_live_...`). Creating an alert also watches the product for continuous scheduler updates.
 
-> **Warning:** ChatGPT may show a **DEV** label on unverified third-party connectors. Pricewatcha only works while **Developer Mode** is enabled.
+**Optional for other MCP clients:** the remote MCP URL is `{{MCP_URL}}`. Connector logo (PNG, max 10 KB): [download from {{SITE_BASE}}/static/img/mcp/chatgpt-logo.png]({{SITE_BASE}}/static/img/mcp/chatgpt-logo.png).

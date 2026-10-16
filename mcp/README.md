@@ -49,25 +49,14 @@ https://mcp.pricewatcha.com
 
 ### ChatGPT
 
-**Prerequisite:** Custom MCP connectors require **Developer Mode** in ChatGPT.
-Enable it once under **Settings → Advanced → Developer Mode**.
-Available on Plus, Pro, Team, Business, Enterprise, and Edu plans (not free).
-Pricewatcha tools are only available while Developer Mode stays enabled.
+Pricewatcha is available as an approved ChatGPT plugin in the official Plugins store.
 
 **Setup:**
-1. Go to **Settings → Apps** → **Add custom connector**
-2. Enter the MCP server URL: `https://mcp.pricewatcha.com`
-3. *(Optional)* Upload a connector logo — **PNG**, max **10 KB**. Use [`chatgpt-logo.png`](chatgpt-logo.png) from this folder (9 KB):
+1. Open **Plugins** in ChatGPT and search for **Pricewatcha**
+2. Open the listing and click **Install plugin**
+3. Confirm **Connect Pricewatcha** on the authorization screen (OAuth)
 
-   ![Pricewatcha ChatGPT connector logo](chatgpt-logo.png)
-
-4. Select **OAuth** as the authentication method
-5. ChatGPT handles the OAuth flow automatically
-
-**Note:** ChatGPT shows a **DEV** label next to unverified custom MCP connectors.
-This is expected. The connector stops working if you turn off Developer Mode.
-
-No API key is required for the MCP connection.
+No API key is required for the MCP connection. Alert and watchlist tools need a Pricewatcha API key (`pwk_live_...`).
 
 ## Agent guidelines
 
