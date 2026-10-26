@@ -18,7 +18,15 @@ const ROOT_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const ROBOTS_TXT = "User-agent: *\nAllow: /\n";
+// Keep OAuth POST-only endpoints out of Googlebot: bare GET returns 405 and
+// shows up in Search Console as "Blocked due to another 4xx problem".
+const ROBOTS_TXT =
+  "User-agent: *\n" +
+  "Allow: /\n" +
+  "Disallow: /register\n" +
+  "Disallow: /token\n" +
+  "Disallow: /revoke\n" +
+  "Disallow: /authorize\n";
 
 export function mountRootPageRoutes(app: Express): void {
   app.get("/", (_req: Request, res: Response) => {

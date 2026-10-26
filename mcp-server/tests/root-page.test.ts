@@ -88,13 +88,16 @@ describe("root page routes", () => {
     assert.match(res.contentType, /^text\/html/);
   });
 
-  it("serves GET /robots.txt that allows crawling", async () => {
+  it("serves GET /robots.txt that allows crawling but blocks OAuth endpoints", async () => {
     const res = await httpGet(port, "/robots.txt");
     assert.equal(res.status, 200);
     assert.match(res.contentType, /^text\/plain/);
     assert.match(res.body, /User-agent:\s*\*/i);
     assert.match(res.body, /Allow:\s*\//i);
-    assert.doesNotMatch(res.body, /Disallow:/i);
+    assert.match(res.body, /Disallow:\s*\/register/i);
+    assert.match(res.body, /Disallow:\s*\/token/i);
+    assert.match(res.body, /Disallow:\s*\/revoke/i);
+    assert.match(res.body, /Disallow:\s*\/authorize/i);
   });
 
   it("leaves POST / unchanged for MCP transport", async () => {
