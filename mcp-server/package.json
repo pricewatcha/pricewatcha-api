@@ -30,7 +30,7 @@
     "@modelcontextprotocol/sdk": "^1.32.0",
     "@pricewatcha/sdk": "file:../sdks/typescript",
     "pg": "^8.13.0",
-    "zod": "^3.24.0"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
